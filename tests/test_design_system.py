@@ -50,6 +50,8 @@ def test_professional_dashboard_uses_barrio_brand_system() -> None:
     assert "ops-header::after" in source
     assert "ops-accent" in source
     assert 'data-testid="stButtonGroup"' in source
+    assert 'data-testid="stExpandSidebarButton"' in source
+    assert '[data-testid="stToolbar"] { visibility: hidden; }' not in source
     assert "prefers-reduced-motion" in source
     assert "https://barriopizza.com" not in source
 

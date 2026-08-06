@@ -118,7 +118,49 @@ html, body, [class*="css"] {
   border-bottom: 1px solid rgba(23, 21, 19, .07);
   backdrop-filter: blur(16px);
 }
-[data-testid="stToolbar"] { visibility: hidden; }
+[data-testid="stToolbar"] {
+  visibility: visible;
+  background: transparent;
+}
+[data-testid="stAppDeployButton"],
+[data-testid="stToolbarActions"],
+[data-testid="stMainMenu"] {
+  display: none;
+}
+[data-testid="stExpandSidebarButton"] {
+  visibility: visible !important;
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  width: auto;
+  height: 2.5rem;
+  padding: 0 .85rem;
+  color: #fff;
+  background: var(--ops-red);
+  border: 1px solid var(--ops-red);
+  border-radius: 999px;
+  box-shadow: 0 8px 20px rgba(35,31,32,.18);
+}
+[data-testid="stExpandSidebarButton"]::after {
+  content: "Filtros";
+  color: #fff;
+  font-family: var(--ops-font-body);
+  font-size: .64rem;
+  font-weight: 850;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+[data-testid="stExpandSidebarButton"] span,
+[data-testid="stExpandSidebarButton"] [data-testid="stIconMaterial"] {
+  color: #fff !important;
+}
+[data-testid="stSidebarCollapseButton"] {
+  visibility: visible !important;
+}
+[data-testid="stSidebarCollapseButton"] button span,
+[data-testid="stSidebarCollapseButton"] button [data-testid="stIconMaterial"] {
+  color: rgba(255,255,255,.82) !important;
+}
 
 [data-testid="stSidebar"] {
   background:
