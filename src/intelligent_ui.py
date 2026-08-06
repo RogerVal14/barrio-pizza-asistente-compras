@@ -97,21 +97,52 @@ def _inject_chat_css() -> None:
     st.markdown(
         """
         <style>
+        .ops-chat-intro {
+            position:relative; overflow:hidden; margin:1.8rem 0 1rem;
+            padding:1.25rem 1.35rem; color:#fff; background:#231f20;
+            border:1px solid rgba(255,255,255,.08); border-radius:18px;
+            box-shadow:0 14px 34px rgba(35,31,32,.12);
+        }
+        .ops-chat-intro::after {
+            content:"?"; position:absolute; right:1rem; top:-1.25rem;
+            color:rgba(255,255,255,.055); font-family:"Arial Narrow",Impact,sans-serif;
+            font-size:9rem; font-weight:900; line-height:1;
+        }
+        .ops-chat-intro h2 {
+            position:relative; z-index:1; margin:.25rem 0 .4rem; color:#fff;
+            font-family:"Arial Narrow",Impact,sans-serif; font-size:2.4rem;
+            font-weight:900; letter-spacing:-.04em; line-height:.95; text-transform:uppercase;
+        }
+        .ops-chat-intro h2 .ops-chat-accent { color:#cf2f2c; }
+        .ops-chat-intro p {
+            position:relative; z-index:1; max-width:760px; margin:0;
+            color:rgba(255,255,255,.7); font-size:.88rem; line-height:1.55;
+        }
         .ops-chat-status {
             display:flex; flex-wrap:wrap; gap:.45rem 1rem; align-items:center;
-            margin:.35rem 0 .75rem; padding:.65rem .85rem; border:1px solid #ded6cc;
-            border-radius:12px; background:rgba(255,255,255,.58); color:#5f574f;
-            font-size:.88rem;
+            margin:.45rem 0 .8rem; padding:.72rem .9rem; border:1px solid #d8d0c7;
+            border-radius:999px; background:rgba(255,253,249,.82); color:#5f574f;
+            font-size:.82rem;
         }
-        .ops-chat-status strong { color:#25211e; }
+        .ops-chat-status strong { color:#231f20; }
         .ops-chat-dot { width:.55rem; height:.55rem; border-radius:50%; background:#2a9362; }
         .ops-chat-dot--local { background:#d58a24; }
         div[data-testid="stChatMessage"] {
-            padding:.7rem .9rem; margin-bottom:.55rem; border:1px solid #e4ded7;
-            border-radius:14px; background:rgba(255,255,255,.62);
+            padding:.8rem 1rem; margin-bottom:.65rem; border:1px solid #ded6cc;
+            border-radius:16px; background:rgba(255,253,249,.86);
+            box-shadow:0 8px 20px rgba(35,31,32,.04);
+        }
+        div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
+            border-left:5px solid #cf2f2c;
         }
         div[data-testid="stChatMessage"] p { margin-bottom:.35rem; }
         div[data-testid="stExpander"] { margin-top:.2rem; }
+        [class*="st-key-intelligent_suggestion"] button {
+            background:#231f20; border-color:#231f20;
+        }
+        [class*="st-key-intelligent_suggestion"] button:hover {
+            background:#cf2f2c; border-color:#cf2f2c;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -122,10 +153,16 @@ def render_intelligent_assistant(pipeline: dict[str, object]) -> None:
     """Presenta Gemini de forma opcional y mantiene siempre el respaldo local."""
 
     _inject_chat_css()
-    st.markdown("### 💬 Pregúntale a tus datos")
-    st.caption(
-        "Las cifras fueron calculadas previamente por Python. La IA solo interpreta y redacta "
-        "respuestas a partir de un subconjunto de esos resultados."
+    st.markdown(
+        """
+        <section class="ops-chat-intro">
+          <div class="ops-kicker">Consulta asistida · evidencia verificable</div>
+          <h2>Pregúntale a tus <span class="ops-chat-accent">datos</span></h2>
+          <p>Las cifras fueron calculadas previamente por Python. La IA solo interpreta y redacta
+          respuestas a partir de un subconjunto de esos resultados.</p>
+        </section>
+        """,
+        unsafe_allow_html=True,
     )
 
     try:
@@ -149,6 +186,7 @@ def render_intelligent_assistant(pipeline: dict[str, object]) -> None:
             [MODE_GEMINI, MODE_LOCAL],
             key="intelligent_chat_mode",
             width="stretch",
+            label_visibility="collapsed",
         )
     with top[1]:
         st.write("")

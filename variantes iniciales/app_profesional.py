@@ -44,12 +44,12 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT_DIR / "datos"
 SEVERITY_ORDER = ["Crítica", "Alta", "Media", "Baja"]
 STATUS_COLORS = {
-    "OMITIDO": "#B42318",
-    "FALTANTE": "#E04F16",
-    "SOBREPEDIDO": "#D28B16",
-    "CORRECTO": "#27845B",
+    "OMITIDO": "#CF2F2C",
+    "FALTANTE": "#E65D32",
+    "SOBREPEDIDO": "#D98E2B",
+    "CORRECTO": "#3F7652",
     "SIN NECESIDAD": "#5C6F7B",
-    "DATO INCOMPLETO": "#7A5AF8",
+    "DATO INCOMPLETO": "#765A92",
 }
 STATUS_BUSINESS_LABELS = {
     "CORRECTO": "✅ No necesita cambios",
@@ -59,11 +59,11 @@ STATUS_BUSINESS_LABELS = {
     "SOBREPEDIDO": "🟡 Se pidió de más",
     "DATO INCOMPLETO": "⚠️ Faltan datos para decidir",
 }
-CHART_COLORS = ["#B42318", "#E04F16", "#D28B16", "#27845B", "#3E6F88", "#7A5AF8"]
+CHART_COLORS = ["#CF2F2C", "#231F20", "#D98E2B", "#3F7652", "#456A80", "#765A92"]
 
 
 st.set_page_config(
-    page_title="Barrio Pizza | Centro Ejecutivo de Compras",
+    page_title="Barrio Pizza | Asistente Inteligente de Compras",
     page_icon="🍕",
     layout="wide",
     initial_sidebar_state="auto",
@@ -73,24 +73,26 @@ st.set_page_config(
 PROFESSIONAL_CSS = """
 <style>
 :root {
-  --ops-ink: #171513;
-  --ops-muted: #6f6a64;
-  --ops-line: #ded8d1;
+  --ops-ink: #231f20;
+  --ops-muted: #706a65;
+  --ops-line: #d8d0c7;
   --ops-paper: #fffdf9;
-  --ops-canvas: #f5f2ed;
-  --ops-red: #b42318;
-  --ops-red-soft: #fce8e6;
-  --ops-amber: #d28b16;
-  --ops-green: #27845b;
-  --ops-blue: #3e6f88;
-  --ops-purple: #7a5af8;
-  --ops-radius: 14px;
-  --ops-shadow: 0 10px 28px rgba(30, 24, 18, .07);
+  --ops-canvas: #f2ece5;
+  --ops-red: #cf2f2c;
+  --ops-red-soft: #fbe8e5;
+  --ops-amber: #d98e2b;
+  --ops-green: #3f7652;
+  --ops-blue: #456a80;
+  --ops-purple: #765a92;
+  --ops-radius: 18px;
+  --ops-shadow: 0 18px 44px rgba(35, 31, 32, .09);
+  --ops-font-display: "Arial Narrow", "Roboto Condensed", Impact, sans-serif;
+  --ops-font-body: "Aptos", "Segoe UI", Arial, sans-serif;
   --ops-pizza-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M5 5 Q16 1 28 8 L11 29 Z' fill='%23F5C451' stroke='%233F231A' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M5 5 Q16 1 28 8' fill='none' stroke='%23C96A2B' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='14' cy='11' r='2.8' fill='%23CF2F2C'/%3E%3Ccircle cx='18' cy='18' r='2.8' fill='%23CF2F2C'/%3E%3Ccircle cx='12' cy='21' r='2.2' fill='%23CF2F2C'/%3E%3Cpath d='M24 9 L11 27' stroke='%23FFF1B8' stroke-width='1.4' opacity='.75'/%3E%3C/svg%3E") 5 5, auto;
 }
 
 html, body, [class*="css"] {
-  font-family: "Aptos", "Segoe UI", Arial, sans-serif;
+  font-family: var(--ops-font-body);
 }
 
 .stApp, .stApp * {
@@ -100,8 +102,10 @@ html, body, [class*="css"] {
 .stApp {
   color: var(--ops-ink);
   background:
-    radial-gradient(circle at 100% 0, rgba(180, 35, 24, .055), transparent 30rem),
+    radial-gradient(circle at 100% 0, rgba(207, 47, 44, .09), transparent 32rem),
+    linear-gradient(90deg, rgba(35, 31, 32, .025) 1px, transparent 1px),
     var(--ops-canvas);
+  background-size: auto, 36px 36px, auto;
 }
 
 [data-testid="stAppViewContainer"] > .main .block-container {
@@ -110,14 +114,16 @@ html, body, [class*="css"] {
 }
 
 [data-testid="stHeader"] {
-  background: rgba(245, 242, 237, .88);
+  background: rgba(242, 236, 229, .88);
   border-bottom: 1px solid rgba(23, 21, 19, .07);
   backdrop-filter: blur(16px);
 }
 [data-testid="stToolbar"] { visibility: hidden; }
 
 [data-testid="stSidebar"] {
-  background: #181614;
+  background:
+    radial-gradient(circle at 20% 4%, rgba(207, 47, 44, .22), transparent 12rem),
+    var(--ops-ink);
   border-right: 1px solid rgba(255, 255, 255, .08);
 }
 
@@ -133,30 +139,37 @@ html, body, [class*="css"] {
 }
 
 .ops-brand {
-  margin: .2rem 0 1.4rem;
-  padding-bottom: 1.1rem;
+  position: relative;
+  margin: .2rem 0 1.5rem;
+  padding: .25rem 0 1.25rem;
   border-bottom: 1px solid rgba(255,255,255,.12);
 }
-.ops-brand__mark {
-  display: inline-grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  margin-right: .65rem;
-  color: #fff;
+.ops-brand::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -2px;
+  width: 54px;
+  height: 3px;
   background: var(--ops-red);
-  border-radius: 10px;
-  font-size: 1.1rem;
-  font-weight: 900;
 }
-.ops-brand__name { font-size: 1rem; font-weight: 800; letter-spacing: -.01em; }
+.ops-brand__word {
+  display: block;
+  color: #fff;
+  font-family: var(--ops-font-display);
+  font-size: 1.95rem;
+  font-weight: 900;
+  letter-spacing: .01em;
+  line-height: .9;
+  text-transform: uppercase;
+}
 .ops-brand__meta {
   display: block;
-  margin: .55rem 0 0 3.05rem;
-  color: rgba(255,255,255,.52);
-  font-size: .68rem;
+  margin-top: .65rem;
+  color: rgba(255,255,255,.58);
+  font-size: .63rem;
   font-weight: 700;
-  letter-spacing: .12em;
+  letter-spacing: .18em;
   text-transform: uppercase;
 }
 
@@ -181,118 +194,184 @@ html, body, [class*="css"] {
 }
 
 .ops-header {
+  isolation: isolate;
+  position: relative;
+  overflow: hidden;
   display: flex;
   gap: 1.5rem;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  padding: .45rem 0 1.25rem;
-  border-bottom: 1px solid var(--ops-line);
+  min-height: 250px;
+  margin: .25rem 0 1rem;
+  padding: 1.75rem clamp(1.5rem, 3.4vw, 2.75rem);
+  color: #fff;
+  background:
+    linear-gradient(112deg, rgba(35,31,32,.99) 0%, rgba(35,31,32,.96) 58%, rgba(63,35,26,.94) 100%),
+    repeating-linear-gradient(-20deg, transparent 0 18px, rgba(255,255,255,.04) 18px 20px);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 22px;
+  box-shadow: 0 24px 60px rgba(35,31,32,.18);
+}
+.ops-header::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: -68px;
+  bottom: -125px;
+  width: 275px;
+  height: 275px;
+  border: 42px solid var(--ops-red);
+  border-radius: 50%;
+}
+.ops-header::after {
+  content: "BARRIO";
+  position: absolute;
+  z-index: -1;
+  top: -.35rem;
+  right: .75rem;
+  color: rgba(255,255,255,.035);
+  font-family: var(--ops-font-display);
+  font-size: clamp(6rem, 14vw, 12rem);
+  font-weight: 900;
+  letter-spacing: -.055em;
+  line-height: 1;
 }
 .ops-eyebrow {
   margin-bottom: .45rem;
   color: var(--ops-red);
-  font-size: .7rem;
+  font-size: .72rem;
   font-weight: 850;
-  letter-spacing: .15em;
+  letter-spacing: .2em;
   text-transform: uppercase;
 }
 .ops-header h1 {
+  max-width: 820px;
   margin: 0;
-  color: var(--ops-ink);
-  font-size: clamp(2rem, 3.7vw, 3.75rem);
-  font-weight: 780;
-  letter-spacing: -.052em;
-  line-height: .98;
-}
-.ops-header p {
-  max-width: 760px;
-  margin: .7rem 0 0;
-  color: var(--ops-muted);
-  font-size: .95rem;
-}
-.ops-review {
-  min-width: 260px;
-  padding: .95rem 1rem;
-  background: var(--ops-paper);
-  border: 1px solid var(--ops-line);
-  border-radius: 12px;
-  box-shadow: var(--ops-shadow);
-}
-.ops-review__label {
-  color: var(--ops-muted);
-  font-size: .66rem;
-  font-weight: 800;
-  letter-spacing: .1em;
+  padding: 0;
+  color: #fff;
+  font-family: var(--ops-font-display);
+  font-size: clamp(2.7rem, 4.4vw, 4.4rem);
+  font-weight: 900;
+  letter-spacing: -.025em;
+  line-height: .88;
   text-transform: uppercase;
 }
-.ops-review__value { margin-top: .25rem; font-size: .92rem; font-weight: 760; }
-.ops-review__human {
-  margin-top: .55rem;
+.ops-header h1 .ops-accent {
   color: var(--ops-red);
+}
+.ops-header p {
+  max-width: 680px;
+  margin: 1rem 0 0;
+  color: rgba(255,255,255,.72);
+  font-size: .95rem;
+  line-height: 1.55;
+}
+.ops-review {
+  min-width: 280px;
+  max-width: 330px;
+  padding: 1.05rem 1.1rem;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 16px;
+  box-shadow: none;
+  backdrop-filter: blur(10px);
+}
+.ops-review__label {
+  color: rgba(255,255,255,.58);
+  font-size: .66rem;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.ops-review__value { margin-top: .35rem; color: #fff; font-size: .92rem; font-weight: 760; line-height: 1.45; }
+.ops-review__human {
+  margin-top: .75rem;
+  padding-top: .7rem;
+  color: #fff;
+  border-top: 1px solid rgba(255,255,255,.14);
   font-size: .7rem;
   font-weight: 760;
 }
+.ops-review__human::first-letter { color: var(--ops-red); }
 
 .ops-section-head {
   display: flex;
   align-items: end;
   justify-content: space-between;
   gap: 1rem;
-  margin: 1.6rem 0 .85rem;
+  margin: 2rem 0 1rem;
 }
 .ops-section-head h2 {
   margin: 0;
+  padding: 0;
   color: var(--ops-ink);
-  font-size: 1.5rem;
-  font-weight: 760;
-  letter-spacing: -.025em;
+  font-family: var(--ops-font-display);
+  font-size: clamp(1.9rem, 3vw, 2.65rem);
+  font-weight: 900;
+  letter-spacing: -.015em;
+  line-height: .95;
+  text-transform: uppercase;
 }
-.ops-section-head p { margin: .25rem 0 0; color: var(--ops-muted); font-size: .82rem; }
+.ops-section-head p { max-width: 760px; margin: .45rem 0 0; color: var(--ops-muted); font-size: .84rem; }
 .ops-kicker {
   color: var(--ops-red);
   font-size: .65rem;
   font-weight: 820;
-  letter-spacing: .13em;
+  letter-spacing: .19em;
   text-transform: uppercase;
 }
 
 .ops-metric {
+  position: relative;
+  overflow: hidden;
   min-height: 132px;
-  padding: 1.05rem 1.1rem;
+  padding: 1.1rem 1.15rem 1.15rem;
   background: var(--ops-paper);
-  border: 1px solid var(--ops-line);
+  border: 1px solid rgba(35,31,32,.14);
   border-radius: var(--ops-radius);
-  box-shadow: 0 7px 18px rgba(30,24,18,.045);
+  box-shadow: 0 10px 26px rgba(35,31,32,.055);
 }
-.ops-metric[data-tone="danger"] { border-top: 4px solid var(--ops-red); }
-.ops-metric[data-tone="warning"] { border-top: 4px solid var(--ops-amber); }
-.ops-metric[data-tone="success"] { border-top: 4px solid var(--ops-green); }
-.ops-metric[data-tone="neutral"] { border-top: 4px solid var(--ops-blue); }
+.ops-metric::after {
+  content: "";
+  position: absolute;
+  right: -18px;
+  bottom: -27px;
+  width: 72px;
+  height: 72px;
+  border: 12px solid var(--tone-color, var(--ops-blue));
+  border-radius: 50%;
+  opacity: .12;
+}
+.ops-metric[data-tone="danger"] { --tone-color: var(--ops-red); }
+.ops-metric[data-tone="warning"] { --tone-color: var(--ops-amber); }
+.ops-metric[data-tone="success"] { --tone-color: var(--ops-green); }
+.ops-metric[data-tone="neutral"] { --tone-color: var(--ops-blue); }
 .ops-metric__label {
   color: var(--ops-muted);
   font-size: .67rem;
   font-weight: 820;
-  letter-spacing: .09em;
+  letter-spacing: .12em;
   text-transform: uppercase;
 }
 .ops-metric__value {
-  margin: .4rem 0 .25rem;
+  margin: .5rem 0 .25rem;
   color: var(--ops-ink);
-  font-size: 2rem;
-  font-weight: 800;
-  letter-spacing: -.045em;
+  font-family: var(--ops-font-display);
+  font-size: 2.55rem;
+  font-weight: 900;
+  letter-spacing: -.055em;
   line-height: 1;
 }
 .ops-metric__note { color: var(--ops-muted); font-size: .72rem; line-height: 1.35; }
 
 .ops-panel {
-  padding: 1rem 1.05rem;
+  padding: 1.1rem 1.15rem;
   background: var(--ops-paper);
-  border: 1px solid var(--ops-line);
+  border: 1px solid rgba(35,31,32,.13);
   border-radius: var(--ops-radius);
-  box-shadow: 0 8px 22px rgba(30,24,18,.045);
+  box-shadow: 0 12px 32px rgba(35,31,32,.055);
 }
-.ops-panel-title { margin: 0 0 .2rem; font-size: 1rem; font-weight: 780; }
+.ops-panel-title { margin: 0 0 .2rem; font-family: var(--ops-font-display); font-size: 1.25rem; font-weight: 900; letter-spacing: -.025em; text-transform: uppercase; }
 .ops-panel-subtitle { margin: 0 0 .9rem; color: var(--ops-muted); font-size: .75rem; }
 
 .ops-alert {
@@ -304,10 +383,10 @@ html, body, [class*="css"] {
   border-radius: 12px;
   box-shadow: 0 6px 16px rgba(30,24,18,.04);
 }
-.ops-alert[data-severity="Crítica"] { --severity-color: #b42318; }
-.ops-alert[data-severity="Alta"] { --severity-color: #e04f16; }
-.ops-alert[data-severity="Media"] { --severity-color: #d28b16; }
-.ops-alert[data-severity="Baja"] { --severity-color: #3e6f88; }
+.ops-alert[data-severity="Crítica"] { --severity-color: #cf2f2c; }
+.ops-alert[data-severity="Alta"] { --severity-color: #e65d32; }
+.ops-alert[data-severity="Media"] { --severity-color: #d98e2b; }
+.ops-alert[data-severity="Baja"] { --severity-color: #456a80; }
 .ops-alert__top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .ops-alert__title { color: var(--ops-ink); font-size: .9rem; font-weight: 800; }
 .ops-badge {
@@ -377,26 +456,45 @@ html, body, [class*="css"] {
 .ops-note--human { background: var(--ops-red-soft); border-color: #efc7c2; }
 .ops-note b { color: var(--ops-ink); }
 
-div[data-testid="stSegmentedControl"] {
+div[data-testid="stButtonGroup"] {
   margin: 1.05rem 0 .25rem;
-  padding: .32rem;
-  background: #eae5de;
-  border: 1px solid #d8d1c8;
-  border-radius: 13px;
+  padding: .36rem;
+  background: var(--ops-ink);
+  border: 1px solid var(--ops-ink);
+  border-radius: 999px;
+  box-shadow: 0 10px 26px rgba(35,31,32,.14);
 }
-div[data-testid="stSegmentedControl"] button {
-  min-height: 2.7rem;
-  border-radius: 9px;
-  font-size: .75rem;
-  font-weight: 760;
+div[data-testid="stButtonGroup"] div[role="radiogroup"] {
+  gap: .2rem;
+}
+div[data-testid="stButtonGroup"] button[data-variant="segmented_control"] {
+  min-height: 2.75rem;
+  color: rgba(255,255,255,.72);
+  background: transparent;
+  border-color: transparent;
+  border-radius: 999px;
+  font-size: .69rem;
+  font-weight: 820;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+div[data-testid="stButtonGroup"] button[data-variant="segmented_control"][data-selected="true"] {
+  color: #fff;
+  background: var(--ops-red);
+}
+div[data-testid="stButtonGroup"] button[data-variant="segmented_control"] p {
+  color: inherit;
 }
 
 div[data-baseweb="tab-list"] {
-  gap: 1.25rem;
+  gap: .4rem;
+  padding: .3rem;
+  background: rgba(35,31,32,.06);
   border-bottom: 1px solid var(--ops-line);
+  border-radius: 12px 12px 0 0;
 }
-button[data-baseweb="tab"] { font-size: .76rem; font-weight: 760; }
-button[data-baseweb="tab"][aria-selected="true"] { color: var(--ops-red); }
+button[data-baseweb="tab"] { border-radius: 9px; font-size: .72rem; font-weight: 800; letter-spacing: .035em; text-transform: uppercase; }
+button[data-baseweb="tab"][aria-selected="true"] { color: #fff; background: var(--ops-red); }
 
 [data-testid="stDataFrame"], [data-testid="stDataEditor"], [data-testid="stPlotlyChart"] {
   overflow: hidden;
@@ -417,19 +515,24 @@ button[data-baseweb="tab"][aria-selected="true"] { color: var(--ops-red); }
 }
 
 div.stButton > button, div.stDownloadButton > button, [data-testid="stFileUploaderDropzone"] button {
-  min-height: 2.55rem;
+  min-height: 2.65rem;
   color: #fff;
-  background: var(--ops-ink);
-  border: 1px solid var(--ops-ink);
-  border-radius: 9px;
-  font-size: .72rem;
-  font-weight: 780;
+  background: var(--ops-red);
+  border: 1px solid var(--ops-red);
+  border-radius: 999px;
+  font-size: .69rem;
+  font-weight: 820;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+  transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
 }
 div.stButton > button:hover, div.stDownloadButton > button:hover,
 [data-testid="stFileUploaderDropzone"] button:hover {
   color: #fff;
-  background: var(--ops-red);
-  border-color: var(--ops-red);
+  background: var(--ops-ink);
+  border-color: var(--ops-ink);
+  box-shadow: 0 8px 20px rgba(35,31,32,.2);
+  transform: translateY(-1px);
 }
 
 .ops-footer {
@@ -442,13 +545,28 @@ div.stButton > button:hover, div.stDownloadButton > button:hover,
 
 @media (max-width: 900px) {
   [data-testid="stAppViewContainer"] > .main .block-container { padding-inline: 1rem; }
-  .ops-header { align-items: flex-start; flex-direction: column; }
+  .ops-header { align-items: flex-start; flex-direction: column; padding: 1.65rem; border-radius: 18px; }
   .ops-review { width: 100%; }
   .ops-alert__facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  div[data-testid="stButtonGroup"] { overflow-x: auto; border-radius: 16px; }
+  div[data-testid="stButtonGroup"] div[role="radiogroup"] {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    width: max-content !important;
+    min-width: max-content !important;
+  }
+  div[data-testid="stButtonGroup"] button[data-variant="segmented_control"] {
+    flex: 0 0 auto !important;
+    min-width: 145px;
+  }
 }
 @media (max-width: 560px) {
   .ops-alert__facts { grid-template-columns: 1fr; }
-  .ops-header h1 { font-size: 2.2rem; }
+  .ops-header { min-height: 0; padding: 1.35rem 1.15rem; }
+  .ops-header h1 { font-size: 2.6rem; line-height: .9; }
+  .ops-header p { font-size: .86rem; }
+  .ops-review { min-width: 0; }
+  .ops-section-head h2 { font-size: 2rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; }
@@ -561,12 +679,13 @@ def chart_layout(figure: go.Figure, *, height: int = 360) -> go.Figure:
         paper_bgcolor="#fffdf9",
         plot_bgcolor="#fffdf9",
         font=dict(family="Aptos, Segoe UI, Arial", color="#393531", size=12),
-        title_font=dict(size=16, color="#171513"),
+        title_font=dict(family="Arial Narrow, Impact, sans-serif", size=18, color="#231f20"),
         legend=dict(title=None, orientation="h", y=-0.18),
-        hoverlabel=dict(bgcolor="#171513", font_color="#fffdf9"),
+        colorway=CHART_COLORS,
+        hoverlabel=dict(bgcolor="#231f20", bordercolor="#cf2f2c", font_color="#fffdf9"),
     )
-    figure.update_xaxes(gridcolor="rgba(23,21,19,.08)", linecolor="rgba(23,21,19,.15)")
-    figure.update_yaxes(gridcolor="rgba(23,21,19,.08)", linecolor="rgba(23,21,19,.15)")
+    figure.update_xaxes(gridcolor="rgba(35,31,32,.08)", linecolor="rgba(35,31,32,.15)")
+    figure.update_yaxes(gridcolor="rgba(35,31,32,.08)", linecolor="rgba(35,31,32,.15)")
     return figure
 
 
@@ -1791,8 +1910,8 @@ with st.sidebar:
     st.markdown(
         """
         <div class="ops-brand">
-          <span class="ops-brand__mark">BP</span><span class="ops-brand__name">Barrio Pizza</span>
-          <span class="ops-brand__meta">Centro de compras</span>
+          <span class="ops-brand__word">Barrio</span>
+          <span class="ops-brand__meta">Inteligencia de compras</span>
         </div>
         """,
         unsafe_allow_html=True,
@@ -1852,9 +1971,9 @@ st.markdown(
     f"""
     <header class="ops-header">
       <div>
-        <div class="ops-eyebrow">Operaciones · abastecimiento semanal</div>
-        <h1>Centro ejecutivo<br>de compras</h1>
-        <p>Convierte consumo, inventario y órdenes en decisiones explicables por sucursal, ingrediente y proveedor.</p>
+        <div class="ops-eyebrow">Barrio Pizza · abastecimiento semanal</div>
+        <h1>Asistente <span class="ops-accent">inteligente</span><br>de compras</h1>
+        <p>Del dato a la decisión: consumo, inventario y órdenes convertidos en acciones claras por sucursal, ingrediente y proveedor.</p>
       </div>
       <div class="ops-review">
         <div class="ops-review__label">Revisión activa</div>

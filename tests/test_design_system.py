@@ -39,3 +39,24 @@ def test_styled_entrypoint_reuses_the_base_dashboard() -> None:
     assert 'with_name("app.py")' in source
     assert "apply_barrio_design" in source
     assert "register_plotly_theme" in source
+
+
+def test_professional_dashboard_uses_barrio_brand_system() -> None:
+    source = Path("variantes iniciales/app_profesional.py").read_text(encoding="utf-8")
+
+    assert "--ops-ink: #231f20" in source
+    assert "--ops-red: #cf2f2c" in source
+    assert "ops-brand__word" in source
+    assert "ops-header::after" in source
+    assert "ops-accent" in source
+    assert 'data-testid="stButtonGroup"' in source
+    assert "prefers-reduced-motion" in source
+    assert "https://barriopizza.com" not in source
+
+
+def test_intelligent_assistant_inherits_brand_hierarchy() -> None:
+    source = Path("src/intelligent_ui.py").read_text(encoding="utf-8")
+
+    assert "ops-chat-intro" in source
+    assert "ops-chat-accent" in source
+    assert 'label_visibility="collapsed"' in source
