@@ -59,7 +59,9 @@ def test_professional_dashboard_uses_barrio_brand_system() -> None:
     assert "¿Qué significa “formato”?" in source
     assert "ops-purchase-facts" in source
     assert 'data-kind="{kind}"' in source
+    assert 'st.html(f\'<div class="ops-purchase-facts">' in source
     assert "facts[3].metric" not in source
+    assert 'f"""\n            <div class="ops-purchase-fact"' not in source
     assert "Definición de formato:" in source
     assert "if chart_title:" in source
     assert "prefers-reduced-motion" in source

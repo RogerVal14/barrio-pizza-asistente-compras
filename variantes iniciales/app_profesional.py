@@ -1455,18 +1455,13 @@ def render_branch_workspace(
             ),
         )
         purchase_facts_html = "".join(
-            f"""
-            <div class="ops-purchase-fact" data-kind="{kind}">
-              <span class="ops-purchase-fact__label">{escape(label)}</span>
-              <b class="ops-purchase-fact__value">{escape(value)}</b>
-            </div>
-            """
+            f'<div class="ops-purchase-fact" data-kind="{kind}">'
+            f'<span class="ops-purchase-fact__label">{escape(label)}</span>'
+            f'<b class="ops-purchase-fact__value">{escape(value)}</b>'
+            "</div>"
             for label, value, kind in purchase_facts
         )
-        st.markdown(
-            f'<div class="ops-purchase-facts">{purchase_facts_html}</div>',
-            unsafe_allow_html=True,
-        )
+        st.html(f'<div class="ops-purchase-facts">{purchase_facts_html}</div>')
         if selected_forecast is None:
             st.warning("No existe una proyección válida para esta combinación.")
         else:
