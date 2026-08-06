@@ -88,10 +88,15 @@ PROFESSIONAL_CSS = """
   --ops-shadow: 0 18px 44px rgba(35, 31, 32, .09);
   --ops-font-display: "Arial Narrow", "Roboto Condensed", Impact, sans-serif;
   --ops-font-body: "Aptos", "Segoe UI", Arial, sans-serif;
+  --ops-pizza-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M2.5 2.5 L29 11.5 Q25 23 12 29 Z' fill='%23F5C451' stroke='%236B351D' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M29 11.5 Q25 23 12 29' fill='none' stroke='%23C96A2B' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='13' cy='11' r='2.6' fill='%23CF2F2C' stroke='%239E211F' stroke-width='.7'/%3E%3Ccircle cx='20' cy='16' r='3' fill='%23CF2F2C' stroke='%239E211F' stroke-width='.7'/%3E%3Ccircle cx='13.5' cy='21' r='2.5' fill='%23CF2F2C' stroke='%239E211F' stroke-width='.7'/%3E%3Ccircle cx='18.8' cy='15' r='.55' fill='%237A1818'/%3E%3Ccircle cx='21.2' cy='16.7' r='.55' fill='%237A1818'/%3E%3Cpath d='M6 6 L12 10 M7 9 L10 12' stroke='%23FFF1B8' stroke-width='1.25' stroke-linecap='round' opacity='.9'/%3E%3C/svg%3E") 2 2, default;
 }
 
 html, body, [class*="css"] {
   font-family: var(--ops-font-body);
+}
+
+.stApp, .stApp * {
+  cursor: var(--ops-pizza-cursor) !important;
 }
 
 .stApp {
