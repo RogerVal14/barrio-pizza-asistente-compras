@@ -6,19 +6,25 @@ El motor de compras y el asistente local funcionan completamente sin claves de A
 
 > El enunciado recibido se preserva sin cambios en [`docs/RETO_ORIGINAL.md`](docs/RETO_ORIGINAL.md).
 
-## Captura del dashboard
+## Capturas del producto
 
 ### Resumen ejecutivo
 
 ![Resumen ejecutivo del Asistente Inteligente de Compras](docs/dashboard_resumen.png)
 
-La vista principal concentra las 88 líneas revisadas, los estados que requieren atención y las alertas prioritarias, manteniendo visibles los filtros y la aprobación humana.
+La vista principal concentra las 88 líneas revisadas y muestra en una sola lectura el porcentaje sin ajuste, los riesgos de quiebre, los sobrepedidos y los errores de datos. La aclaración evita sumar dos veces las señales comparativas entre sucursales.
+
+### Asistente inteligente con evidencia
+
+![Consulta en español respondida por el asistente inteligente](docs/dashboard_asistente_inteligente.png)
+
+El chat responde sobre cifras calculadas previamente por Python, identifica el modo utilizado y conserva las fuentes en un panel desplegable. Si Gemini no está disponible, la misma interfaz continúa con el asistente local.
 
 ### Tendencia creciente y recomendación
 
 ![Detalle de la tendencia de Harina 00 en Costa del Este](docs/dashboard_tendencia_harina.png)
 
-El detalle muestra las seis semanas observadas, la proyección S7, el inventario disponible y la conversión de la necesidad a formatos completos de compra.
+El detalle de Costa del Este muestra el crecimiento de Harina 00 durante S1–S6 y la proyección S7. En la misma vista se observan inventario, consumo esperado, necesidad, formatos ordenados y recomendados.
 
 ## Descripción del problema de negocio
 
