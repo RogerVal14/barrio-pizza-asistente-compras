@@ -52,6 +52,8 @@ def test_professional_dashboard_uses_barrio_brand_system() -> None:
     assert 'data-testid="stButtonGroup"' in source
     assert 'data-testid="stExpandSidebarButton"' in source
     assert '[data-testid="stToolbar"] { visibility: hidden; }' not in source
+    assert "ops-pizza-cursor" not in source
+    assert "if chart_title:" in source
     assert "prefers-reduced-motion" in source
     assert "https://barriopizza.com" not in source
 

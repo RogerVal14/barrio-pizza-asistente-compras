@@ -88,15 +88,10 @@ PROFESSIONAL_CSS = """
   --ops-shadow: 0 18px 44px rgba(35, 31, 32, .09);
   --ops-font-display: "Arial Narrow", "Roboto Condensed", Impact, sans-serif;
   --ops-font-body: "Aptos", "Segoe UI", Arial, sans-serif;
-  --ops-pizza-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M5 5 Q16 1 28 8 L11 29 Z' fill='%23F5C451' stroke='%233F231A' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M5 5 Q16 1 28 8' fill='none' stroke='%23C96A2B' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='14' cy='11' r='2.8' fill='%23CF2F2C'/%3E%3Ccircle cx='18' cy='18' r='2.8' fill='%23CF2F2C'/%3E%3Ccircle cx='12' cy='21' r='2.2' fill='%23CF2F2C'/%3E%3Cpath d='M24 9 L11 27' stroke='%23FFF1B8' stroke-width='1.4' opacity='.75'/%3E%3C/svg%3E") 5 5, auto;
 }
 
 html, body, [class*="css"] {
   font-family: var(--ops-font-body);
-}
-
-.stApp, .stApp * {
-  cursor: var(--ops-pizza-cursor) !important;
 }
 
 .stApp {
@@ -715,17 +710,24 @@ def format_table(frame: pd.DataFrame) -> pd.DataFrame:
 def chart_layout(figure: go.Figure, *, height: int = 360) -> go.Figure:
     """Aplica una presentación sobria y consistente a los gráficos."""
 
-    figure.update_layout(
+    chart_title = figure.layout.title.text if figure.layout.title else None
+    layout_options: dict[str, object] = dict(
         height=height,
         margin=dict(l=20, r=20, t=55, b=30),
         paper_bgcolor="#fffdf9",
         plot_bgcolor="#fffdf9",
         font=dict(family="Aptos, Segoe UI, Arial", color="#393531", size=12),
-        title_font=dict(family="Arial Narrow, Impact, sans-serif", size=18, color="#231f20"),
         legend=dict(title=None, orientation="h", y=-0.18),
         colorway=CHART_COLORS,
         hoverlabel=dict(bgcolor="#231f20", bordercolor="#cf2f2c", font_color="#fffdf9"),
     )
+    if chart_title:
+        layout_options["title_font"] = dict(
+            family="Arial Narrow, Impact, sans-serif",
+            size=18,
+            color="#231f20",
+        )
+    figure.update_layout(**layout_options)
     figure.update_xaxes(gridcolor="rgba(35,31,32,.08)", linecolor="rgba(35,31,32,.15)")
     figure.update_yaxes(gridcolor="rgba(35,31,32,.08)", linecolor="rgba(35,31,32,.15)")
     return figure
