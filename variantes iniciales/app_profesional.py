@@ -700,6 +700,14 @@ def signed_integer(value: object) -> str:
     return f"{int(round(float(value))):+d}"
 
 
+def purchase_quantity_phrase(value: object, format_name: object) -> str:
+    """Presenta una cantidad con el empaque real del proveedor."""
+
+    if value is None or pd.isna(value):
+        return "No calculable"
+    return purchase_format_phrase(format_name, int(round(float(value))))
+
+
 def format_table(frame: pd.DataFrame) -> pd.DataFrame:
     """Evita sufijos decimales en columnas expresadas como formatos."""
 
@@ -741,9 +749,18 @@ def chart_layout(figure: go.Figure, *, height: int = 360) -> go.Figure:
 def alert_card(row: object) -> None:
     """Renderiza una alerta completa como unidad de decisión."""
 
-    ordered = safe_integer(getattr(row, "formatos_ordenados"))
-    recommended = safe_integer(getattr(row, "formatos_recomendados"))
-    difference = signed_integer(getattr(row, "diferencia_formatos"))
+    format_name = getattr(row, "formato_compra")
+    ordered = purchase_quantity_phrase(getattr(row, "formatos_ordenados"), format_name)
+    recommended = purchase_quantity_phrase(getattr(row, "formatos_recomendados"), format_name)
+    difference_value = getattr(row, "diferencia_formatos")
+    if difference_value is None or pd.isna(difference_value):
+        difference = "No calculable"
+    elif float(difference_value) < 0:
+        difference = f"Faltan {purchase_quantity_phrase(abs(float(difference_value)), format_name)}"
+    elif float(difference_value) > 0:
+        difference = f"Sobran {purchase_quantity_phrase(float(difference_value), format_name)}"
+    else:
+        difference = "Sin diferencia"
     perishable = str(getattr(row, "es_perecedero"))
     st.markdown(
         f"""
@@ -754,9 +771,9 @@ def alert_card(row: object) -> None:
           </div>
           <div class="ops-alert__message">{escape(str(row.mensaje))}</div>
           <div class="ops-alert__facts">
-            <div class="ops-fact"><span>Orden</span><b>{ordered} formatos</b></div>
-            <div class="ops-fact"><span>Recomendación</span><b>{recommended} formatos</b></div>
-            <div class="ops-fact"><span>Diferencia</span><b>{difference} formatos</b></div>
+            <div class="ops-fact"><span>Orden</span><b>{escape(ordered)}</b></div>
+            <div class="ops-fact"><span>Recomendación</span><b>{escape(recommended)}</b></div>
+            <div class="ops-fact"><span>Diferencia</span><b>{escape(difference)}</b></div>
             <div class="ops-fact"><span>Condición</span><b>{'Perecedero' if perishable == 'Sí' else 'No perecedero'}</b></div>
           </div>
           <div class="ops-alert__action"><b>Decisión sugerida:</b> {escape(str(row.accion_recomendada))}
@@ -1325,6 +1342,18 @@ def render_branch_workspace(
         ]
         selected_forecast = forecast_rows.iloc[0] if not forecast_rows.empty else None
 
+        format_example = purchase_quantity_phrase(1, selected["formato_compra"])
+        st.markdown(
+            f"""
+            <div class="ops-note" style="margin:.7rem 0 1rem">
+              <b>¿Qué significa “formato”?</b> Es la presentación completa e indivisible que vende el proveedor.
+              Para {escape(str(ingredient_name))}, <b>1 formato equivale a {escape(format_example)}</b>.
+              Como no se compran fracciones de un empaque, la recomendación siempre se redondea hacia arriba.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
         figure = go.Figure()
         figure.add_trace(
             go.Scatter(
@@ -1378,8 +1407,14 @@ def render_branch_workspace(
         facts[0].metric("Disponible ahora", f"{format_number(selected['inventario_actual'])} {selected['unidad_base']}")
         facts[1].metric("Consumo esperado", f"{format_number(selected['consumo_proyectado'])} {selected['unidad_base']}")
         facts[2].metric("Falta cubrir", f"{format_number(selected['necesidad_base'])} {selected['unidad_base']}")
-        facts[3].metric("Se pidió", f"{safe_integer(selected['formatos_ordenados'])} formatos")
-        facts[4].metric("Se recomienda", f"{safe_integer(selected['formatos_recomendados'])} formatos")
+        facts[3].metric(
+            "Se pidió",
+            purchase_quantity_phrase(selected["formatos_ordenados"], selected["formato_compra"]),
+        )
+        facts[4].metric(
+            "Se recomienda",
+            purchase_quantity_phrase(selected["formatos_recomendados"], selected["formato_compra"]),
+        )
         if selected_forecast is None:
             st.warning("No existe una proyección válida para esta combinación.")
         else:
@@ -1804,6 +1839,12 @@ def render_data_and_method(pipeline: dict[str, object], safety_margin: float) ->
             El pequeño excedente que queda dentro del último formato es normal. Solo hay sobrepedido cuando
             se solicitó por lo menos un formato completo adicional.
             """
+        )
+        st.markdown(
+            "<div class='ops-note'><b>Definición de formato:</b> es la unidad completa en la que el proveedor "
+            "vende un ingrediente, por ejemplo un saco de 25 kg, una caja de 10 kg o un paquete de 250 g. "
+            "No representa una unidad de peso genérica y no se permiten fracciones del empaque.</div>",
+            unsafe_allow_html=True,
         )
         review = pipeline["review"]
         examples = review[

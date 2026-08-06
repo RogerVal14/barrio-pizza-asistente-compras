@@ -55,6 +55,9 @@ def test_professional_dashboard_uses_barrio_brand_system() -> None:
     assert "--ops-pizza-cursor" in source
     assert ") 2 2, default;" in source
     assert ".stApp, .stApp *" in source
+    assert "purchase_quantity_phrase" in source
+    assert "¿Qué significa “formato”?" in source
+    assert "Definición de formato:" in source
     assert "if chart_title:" in source
     assert "prefers-reduced-motion" in source
     assert "https://barriopizza.com" not in source
