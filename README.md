@@ -33,6 +33,7 @@ Las sucursales preparan órdenes en formatos completos —sacos, cajas, latas, p
 ## Funcionalidades
 
 - Resumen ejecutivo con KPIs, prioridades y gráficos por sucursal y tipo de alerta.
+- Sistema visual adaptable inspirado en la experiencia pública de Barrio Pizza, con navegación accesible, panel lateral recuperable y cursor de pizza orientado como puntero convencional.
 - Alertas accionables con severidad, proveedor, perecedero, cantidades en formatos y unidad base.
 - Benchmarking de órdenes entre sucursales, normalizado por recomendación y con evidencia de pares.
 - Cuadrícula completa de sucursal e ingrediente derivada del histórico y del catálogo.
