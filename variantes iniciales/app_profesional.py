@@ -406,6 +406,40 @@ html, body, [class*="css"] {
 }
 .ops-metric__note { color: var(--ops-muted); font-size: .72rem; line-height: 1.35; }
 
+.ops-purchase-facts {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1rem 0 .8rem;
+}
+.ops-purchase-fact {
+  min-width: 0;
+  padding: .9rem 0;
+  border-bottom: 2px solid rgba(35,31,32,.12);
+}
+.ops-purchase-fact span {
+  display: block;
+  margin-bottom: .45rem;
+  color: var(--ops-muted);
+  font-size: .78rem;
+  line-height: 1.25;
+}
+.ops-purchase-fact b {
+  display: block;
+  color: var(--ops-ink);
+  font-family: var(--ops-font-body);
+  font-size: clamp(1.65rem, 2.45vw, 2.65rem);
+  font-weight: 400;
+  letter-spacing: -.035em;
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.ops-purchase-fact[data-kind="purchase"] b {
+  font-size: clamp(1.35rem, 1.9vw, 2rem);
+  line-height: 1.12;
+}
+
 .ops-panel {
   padding: 1.1rem 1.15rem;
   background: var(--ops-paper);
@@ -601,6 +635,7 @@ div.stButton > button:hover, div.stDownloadButton > button:hover,
     flex: 0 0 auto !important;
     min-width: 145px;
   }
+  .ops-purchase-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 560px) {
   .ops-alert__facts { grid-template-columns: 1fr; }
@@ -609,6 +644,7 @@ div.stButton > button:hover, div.stDownloadButton > button:hover,
   .ops-header p { font-size: .86rem; }
   .ops-review { min-width: 0; }
   .ops-section-head h2 { font-size: 2rem; }
+  .ops-purchase-facts { grid-template-columns: 1fr; gap: .35rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; }
@@ -1403,17 +1439,33 @@ def render_branch_workspace(
         )
         st.plotly_chart(chart_layout(figure, height=430), width="stretch")
 
-        facts = st.columns(5)
-        facts[0].metric("Disponible ahora", f"{format_number(selected['inventario_actual'])} {selected['unidad_base']}")
-        facts[1].metric("Consumo esperado", f"{format_number(selected['consumo_proyectado'])} {selected['unidad_base']}")
-        facts[2].metric("Falta cubrir", f"{format_number(selected['necesidad_base'])} {selected['unidad_base']}")
-        facts[3].metric(
-            "Se pidió",
-            purchase_quantity_phrase(selected["formatos_ordenados"], selected["formato_compra"]),
+        purchase_facts = (
+            ("Disponible ahora", f"{format_number(selected['inventario_actual'])} {selected['unidad_base']}", "base"),
+            ("Consumo esperado", f"{format_number(selected['consumo_proyectado'])} {selected['unidad_base']}", "base"),
+            ("Falta cubrir", f"{format_number(selected['necesidad_base'])} {selected['unidad_base']}", "base"),
+            (
+                "Se pidió",
+                purchase_quantity_phrase(selected["formatos_ordenados"], selected["formato_compra"]),
+                "purchase",
+            ),
+            (
+                "Se recomienda",
+                purchase_quantity_phrase(selected["formatos_recomendados"], selected["formato_compra"]),
+                "purchase",
+            ),
         )
-        facts[4].metric(
-            "Se recomienda",
-            purchase_quantity_phrase(selected["formatos_recomendados"], selected["formato_compra"]),
+        purchase_facts_html = "".join(
+            f"""
+            <div class="ops-purchase-fact" data-kind="{kind}">
+              <span class="ops-purchase-fact__label">{escape(label)}</span>
+              <b class="ops-purchase-fact__value">{escape(value)}</b>
+            </div>
+            """
+            for label, value, kind in purchase_facts
+        )
+        st.markdown(
+            f'<div class="ops-purchase-facts">{purchase_facts_html}</div>',
+            unsafe_allow_html=True,
         )
         if selected_forecast is None:
             st.warning("No existe una proyección válida para esta combinación.")
