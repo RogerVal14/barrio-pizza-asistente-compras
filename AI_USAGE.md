@@ -12,7 +12,6 @@ ChatGPT + Codex se utilizó como asistente de ingeniería para:
 - documentar decisiones, limitaciones y una posible integración futura con Odoo;
 - ejecutar revisiones automáticas de sintaxis, pruebas y arranque de la aplicación.
 
-La IA no sustituyó la validación humana. Las fórmulas y los resultados se contrastaron programáticamente contra los CSV entregados, incluyendo los seis casos esperados del reto.
 
 ## Revisión realizada durante esta sesión
 
@@ -39,9 +38,9 @@ La clave de Gemini se configuró mediante secretos y no se escribió directament
 
 El prompt principal solicitó construir **“Barrio Pizza | Asistente Inteligente de Compras”** en Python y Streamlit, inspeccionar completamente los CSV antes de programar, usar MAD y una tendencia lineal con umbrales explícitos, respetar las fórmulas de compra, separar alertas de calidad y anomalías, crear pruebas con `pytest`, documentar el uso de IA y validar el arranque headless.
 
-Otro prompt real solicitó crear una variante `intelligent`, integrar Gemini con `google-genai`, enviar solo contexto compacto, exigir evidencia estructurada, proteger la clave y mantener un fallback local para errores o límites del proveedor.
+Otro prompt real que hice fue crear una variante `intelligent`, integrar Gemini con `google-genai`, enviar solo contexto compacto, exigir evidencia estructurada, proteger la clave y mantener un fallback local para errores o límites del proveedor.
 
-No se inventan conversaciones adicionales ni prompts que no ocurrieron.
+
 
 ## Riesgos de usar IA y mitigación
 
@@ -65,7 +64,7 @@ No se inventan conversaciones adicionales ni prompts que no ocurrieron.
 
 Probé personalmente la aplicación en el navegador y recorrí sus diferentes secciones. Revisé las alertas, recomendaciones, gráficos, filtros, comparación entre sucursales, asistente local, chat con Gemini y archivos descargables. También comprobé casos importantes como la mozzarella omitida, el faltante de harina, el valor atípico de pepperoni y los sobrepedidos de cebolla y albahaca.
 
-Durante el proceso fui proponiendo cambios para que la herramienta fuera más fácil de entender. Por ejemplo, pedí simplificar algunas explicaciones técnicas, aclarar qué significa un formato de compra, mejorar los filtros, separar el asistente en su propia pestaña y hacer que las comparaciones entre sucursales fueran más claras. También trabajé en detalles visuales como la barra lateral, el tamaño de los gráficos, el cursor de pizza y los reportes descargables en Excel.
+Durante el proceso fui proponiendo cambios para que la herramienta fuera más fácil de entender para cualquier persona a simple vista. Por ejemplo, pedí simplificar algunas explicaciones técnicas, aclarar qué significa un formato de compra, mejorar los filtros, separar el asistente en su propia pestaña y hacer que las comparaciones entre sucursales fueran más claras. También trabajé en detalles visuales como la barra lateral, el tamaño de los gráficos, el cursor de pizza y los reportes descargables en Excel.
 
 ### Qué aprendí y qué decisión defendería
 
@@ -73,7 +72,7 @@ Aprendí que no siempre es necesario utilizar un modelo complicado para construi
 
 Una decisión que defendería en una entrevista es el método de proyección utilizado. La herramienta detecta semanas atípicas con MAD y utiliza una tendencia lineal solamente cuando realmente existe suficiente evidencia. Cuando no hay una tendencia fuerte, usa un promedio limpio. Me parece una buena decisión porque evita generar alertas falsas y permite explicar de dónde salió cada recomendación.
 
-También defendería que Gemini no haga los cálculos. Python calcula el consumo esperado, la necesidad y los formatos recomendados. Gemini solamente ayuda a explicar esos resultados en un lenguaje más natural.
+También defendería que Gemini no haga los cálculos. Python calcula el consumo esperado, la necesidad y los formatos recomendados. Gemini solamente ayuda a explicar esos resultados en términos mas amigables.
 
 ### Otras herramientas de IA utilizadas
 
@@ -92,9 +91,9 @@ Durante el desarrollo también fui haciendo solicitudes más específicas, como:
 - mejorar la barra lateral, los gráficos, los filtros y la navegación;
 - agregar y ajustar el cursor de pizza;
 - integrar Gemini sin permitirle cambiar o recalcular cifras;
-- ordenar mejor el chat y agregar preguntas sugeridas;
+- ordenar mejor el chat y agregar algunas preguntas sugeridas;
 - explicar dentro del dashboard qué significa un formato de compra;
 - crear reportes Excel más visuales como alternativa a los CSV;
 - probar el funcionamiento, la compilación y el arranque de la aplicación.
 
-La aplicación completa todavía debe presentarse y explicarse en el video con palabras propias. Ninguna recomendación de compra debe aprobarse automáticamente sin revisión humana.
+
