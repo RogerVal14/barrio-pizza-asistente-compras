@@ -108,7 +108,6 @@ flowchart LR
 - `variantes iniciales/app_barrio_style.py`: variante que reutiliza la experiencia original con el sistema visual alternativo.
 - `variantes iniciales/app_profesional.py`: centro ejecutivo reutilizado por la entrega inteligente.
 - `app_intelligent.py`: variante del centro ejecutivo con Gemini opcional y asistente local de respaldo.
-- `variantes iniciales/app_shiny.py`: rediseño alternativo con Shiny; reutiliza los mismos módulos de negocio.
 
 Todos los `merge` relevantes declaran su cardinalidad con `validate="many_to_one"`, `"one_to_one"` o el equivalente apropiado.
 
@@ -120,8 +119,7 @@ Todos los `merge` relevantes declaran su cardinalidad con `validate="many_to_one
 ├── variantes iniciales/
 │   ├── app.py
 │   ├── app_barrio_style.py
-│   ├── app_profesional.py
-│   └── app_shiny.py
+│   └── app_profesional.py
 ├── datos/
 │   ├── ingredientes.csv
 │   ├── consumo_historico.csv
@@ -152,7 +150,6 @@ Todos los `merge` relevantes declaran su cardinalidad con `validate="many_to_one
 │   ├── RETO_ORIGINAL.md
 │   └── guion_video.md
 ├── requirements.txt
-├── requirements-shiny.txt
 ├── pytest.ini
 ├── README.md
 ├── AI_USAGE.md
@@ -252,24 +249,6 @@ streamlit run app_intelligent.py
 Si falta la clave, no está instalado el SDK, la API devuelve `429`, supera el tiempo de espera o entrega una respuesta inválida, la interfaz usa el asistente local sin interrumpir el dashboard. La consulta a Gemini envía como máximo un conjunto limitado de líneas relevantes, ordenadas por severidad; no envía el historial completo ni columnas fuera del esquema permitido. La respuesta estructurada se valida antes de mostrarse y debe citar los identificadores de evidencia utilizados.
 
 El nivel gratuito del proveedor puede aplicar cuotas y límites de frecuencia. En una implementación productiva se revisarían previamente la política de privacidad, las condiciones del proveedor y la clasificación de la información comercial antes de enviar datos fuera de la organización.
-
-### Rediseño alternativo con Shiny para Python
-
-El repositorio conserva las versiones iniciales de Streamlit e incluye `variantes iniciales/app_shiny.py` como experiencia alternativa. Todas leen los mismos CSV y reutilizan las mismas validaciones, proyecciones, fórmulas y alertas de `src/`; el rediseño no mantiene una segunda lógica de compra.
-
-La variante Shiny utiliza barra lateral adaptable, tarjetas, `value_box`, navegación por paneles, tablas filtrables, gráficos Plotly reactivos, carga de archivos, edición de cantidades y descargas. Para instalar sus dependencias adicionales:
-
-```bash
-pip install -r requirements-shiny.txt
-```
-
-Ejecución de la versión Shiny:
-
-```bash
-shiny run --reload "variantes iniciales/app_shiny.py"
-```
-
-La aplicación abre normalmente en `http://127.0.0.1:8000`. Esta variante es para comparación local o para una plataforma compatible con aplicaciones Shiny. Streamlit Community Cloud debe continuar apuntando a `app_intelligent.py`.
 
 ## Método de proyección
 
