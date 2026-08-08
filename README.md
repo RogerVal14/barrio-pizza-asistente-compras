@@ -4,6 +4,8 @@ Prototipo funcional en Python y Streamlit para revisar las órdenes semanales de
 
 El motor de compras y el asistente local funcionan completamente sin claves de API. La variante `app_intelligent.py` puede usar Gemini de forma opcional para interpretar resultados ya calculados; si la integración no está configurada o falla, vuelve automáticamente al asistente local. Las recomendaciones son apoyo a la decisión y siempre requieren aprobación humana.
 
+**Aplicación pública:** [abrir Barrio Pizza | Asistente Inteligente de Compras](https://barrio-pizza-asistente-compras-aapy4fzuyfpau2alzceec5.streamlit.app/)
+
 > El enunciado recibido se preserva sin cambios en [`docs/RETO_ORIGINAL.md`](docs/RETO_ORIGINAL.md).
 
 ## Capturas del producto
@@ -25,6 +27,21 @@ El chat responde sobre cifras calculadas previamente por Python, identifica el m
 ![Detalle de la tendencia de Harina 00 en Costa del Este](docs/dashboard_tendencia_harina.png)
 
 El detalle de Costa del Este muestra el crecimiento de Harina 00 durante S1–S6 y la proyección S7. En la misma vista se observan inventario, consumo esperado, necesidad, formatos ordenados y recomendados.
+
+## Verificación final con los datos originales
+
+La versión publicada se comprobó con el margen de seguridad en **0%**. Los resultados observados fueron:
+
+| Caso | Resultado comprobado |
+|---|---|
+| Mozzarella · Brisas del Golf | Producto omitido; se recomiendan 18 cajas de 10 kg. |
+| Harina 00 · Costa del Este | Tendencia lineal; proyección de 330,27 kg; 13 sacos recomendados frente a 6 ordenados; faltan 7. |
+| Pepperoni · Marbella | S3 = 150 kg detectado y excluido como atípico; proyección limpia de 29 kg; 5 cajas ordenadas y recomendadas. |
+| Cebolla blanca · Brisas del Golf | 5 sacos ordenados frente a 2 recomendados; sobran 3. |
+| Albahaca fresca · Via Argentina | 20 paquetes ordenados frente a 2 recomendados; sobran 18; producto perecedero. |
+| `aji_chombo` · Costa del Este | Ingrediente fuera del catálogo; no se inventan proveedor, unidad ni formato de compra. |
+
+Estas cifras son resultados de prueba sobre los CSV entregados y continúan sujetas a aprobación humana antes de emitir una compra.
 
 ## Descripción del problema de negocio
 
