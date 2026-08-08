@@ -28,6 +28,14 @@ El chat responde sobre cifras calculadas previamente por Python, identifica el m
 
 El detalle de Costa del Este muestra el crecimiento de Harina 00 durante S1–S6 y la proyección S7. En la misma vista se observan inventario, consumo esperado, necesidad, formatos ordenados y recomendados.
 
+### Reportes visuales para compartir
+
+![Descarga del reporte visual de alertas en Excel](docs/descarga_excel_alertas.png)
+
+![Descarga de la revisión visual de una sucursal en Excel](docs/descarga_excel_sucursal.png)
+
+Las pestañas de alertas y sucursales ofrecen un Excel listo para revisión gerencial, con resumen, decisiones prioritarias y evidencia en hojas separadas. El CSV permanece disponible dentro de las opciones avanzadas para quien necesite analizar datos crudos.
+
 ## Verificación final con los datos originales
 
 La versión publicada se comprobó con el margen de seguridad en **0%**. Los resultados observados fueron:
@@ -52,6 +60,7 @@ Las sucursales preparan órdenes en formatos completos —sacos, cajas, latas, p
 - Resumen ejecutivo con KPIs, prioridades y gráficos por sucursal y tipo de alerta.
 - Sistema visual adaptable inspirado en la experiencia pública de Barrio Pizza, con navegación accesible, panel lateral recuperable y cursor de pizza orientado como puntero convencional.
 - Alertas accionables con severidad, proveedor, perecedero, cantidades en formatos y unidad base.
+- Reportes Excel visuales para alertas y revisiones por sucursal, con resumen ejecutivo, acciones prioritarias, etiquetas legibles y evidencia técnica en hojas separadas. El CSV se conserva como descarga avanzada.
 - Benchmarking de órdenes entre sucursales, normalizado por recomendación y con evidencia de pares.
 - Cuadrícula completa de sucursal e ingrediente derivada del histórico y del catálogo.
 - Detección explícita de productos omitidos y artículos pedidos fuera de catálogo.

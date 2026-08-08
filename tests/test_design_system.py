@@ -66,6 +66,10 @@ def test_professional_dashboard_uses_barrio_brand_system() -> None:
     assert "if chart_title:" in source
     assert "prefers-reduced-motion" in source
     assert "https://barriopizza.com" not in source
+    assert "Descargar reporte visual de alertas (Excel)" in source
+    assert "Descargar revisión visual de" in source
+    assert "Opciones avanzadas de descarga" in source
+    assert "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" in source
 
 
 def test_intelligent_assistant_inherits_brand_hierarchy() -> None:

@@ -36,6 +36,7 @@ from src.benchmarking import (
 from src.data_loader import DataBundle, load_data, read_order_upload
 from src.forecasting import forecast_all, week_number
 from src.purchasing import build_purchase_review, corrected_order, unknown_order_lines
+from src.reporting import build_alerts_excel, build_branch_excel
 from src.ui_helpers import answer_local_question, dataframe_to_csv_bytes, friendly_review_table
 from src.validation import validate_data
 
@@ -1171,13 +1172,34 @@ def render_alert_center(alerts: pd.DataFrame, behaviors: pd.DataFrame) -> None:
         table = visible[table_columns].copy() if not visible.empty else pd.DataFrame(columns=table_columns)
         with st.expander("Ver tabla consolidada", expanded=False):
             st.dataframe(format_table(table), width="stretch", hide_index=True)
-        st.download_button(
-            "Descargar alertas visibles",
-            dataframe_to_csv_bytes(table),
-            file_name="alertas_compra_revision.csv",
-            mime="text/csv",
-            width="stretch",
+        st.markdown(
+            "<div class='ops-note'><b>Reporte listo para compartir.</b> Incluye un resumen, "
+            "las decisiones prioritarias y el detalle completo en hojas separadas. Se abre en "
+            "Excel con colores, filtros y cantidades expresadas en sacos, cajas o paquetes.</div>",
+            unsafe_allow_html=True,
         )
+        st.download_button(
+            "📊 Descargar reporte visual de alertas (Excel)",
+            build_alerts_excel(visible),
+            file_name="reporte_visual_alertas_compra.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            width="stretch",
+            type="primary",
+            key="pro_download_alerts_excel",
+        )
+        with st.expander("Opciones avanzadas de descarga"):
+            st.caption(
+                "El CSV conserva datos simples para análisis técnico. Para una revisión gerencial, "
+                "recomendamos el reporte Excel anterior."
+            )
+            st.download_button(
+                "Descargar alertas visibles en CSV",
+                dataframe_to_csv_bytes(table),
+                file_name="alertas_compra_revision.csv",
+                mime="text/csv",
+                width="stretch",
+                key="pro_download_alerts_csv",
+            )
 
     with behavior_tab:
         st.markdown(
@@ -1317,12 +1339,17 @@ def render_branch_workspace(
             value=False,
             key="pro_show_all_branch_lines",
         )
-        decisions = branch_decision_table(branch_review)
+        all_decisions = branch_decision_table(branch_review)
+        decisions = all_decisions.copy()
         if not show_all:
             decisions = decisions[
                 decisions["_estado"].isin(["OMITIDO", "FALTANTE", "SOBREPEDIDO", "DATO INCOMPLETO"])
             ]
         visible_decisions = decisions.drop(columns=["_prioridad", "_estado"])
+        technical = friendly_review_table(branch_review)
+        for column in ["Inventario actual", "Proyección", "Necesidad"]:
+            if column in technical:
+                technical[column] = pd.to_numeric(technical[column], errors="coerce").round(2)
         st.caption(
             f"Mostrando {len(visible_decisions)} de {len(branch_review)} productos de {branch}."
         )
@@ -1331,20 +1358,40 @@ def render_branch_workspace(
             width="stretch",
             hide_index=True,
         )
-        st.download_button(
-            "Descargar revisión de esta sucursal",
-            dataframe_to_csv_bytes(visible_decisions),
-            file_name=f"revision_{branch.lower().replace(' ', '_')}.csv",
-            mime="text/csv",
-            width="stretch",
-            key="pro_download_branch_review",
+        st.markdown(
+            f"<div class='ops-note'><b>Reporte de {escape(branch)} listo para compartir.</b> "
+            "Incluye el resumen de la sucursal, qué debes cambiar antes de aprobar, la orden "
+            "completa y una hoja separada con los datos del cálculo.</div>",
+            unsafe_allow_html=True,
         )
+        st.download_button(
+            f"📊 Descargar revisión visual de {branch} (Excel)",
+            build_branch_excel(
+                branch,
+                all_decisions,
+                technical,
+                safety_margin=safety_margin,
+            ),
+            file_name=f"revision_visual_{branch.lower().replace(' ', '_')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            width="stretch",
+            type="primary",
+            key="pro_download_branch_excel",
+        )
+        with st.expander("Opciones avanzadas de descarga"):
+            st.caption(
+                "El CSV contiene exactamente las filas visibles en pantalla y es útil para análisis técnico."
+            )
+            st.download_button(
+                "Descargar filas visibles en CSV",
+                dataframe_to_csv_bytes(visible_decisions),
+                file_name=f"revision_{branch.lower().replace(' ', '_')}.csv",
+                mime="text/csv",
+                width="stretch",
+                key="pro_download_branch_csv",
+            )
 
         with st.expander("Ver datos usados para los cálculos"):
-            technical = friendly_review_table(branch_review)
-            for column in ["Inventario actual", "Proyección", "Necesidad"]:
-                if column in technical:
-                    technical[column] = pd.to_numeric(technical[column], errors="coerce").round(2)
             st.caption(
                 "Esta tabla contiene inventario, proyección y método. Se conserva para auditoría, "
                 "pero no necesitas leerla para saber qué cambiar."
