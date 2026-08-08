@@ -2,7 +2,7 @@
 
 ## Herramienta utilizada
 
-Codex se utilizó como asistente de ingeniería para:
+ChatGPT + Codex se utilizó como asistente de ingeniería para:
 
 - leer el enunciado y analizar la estructura de los cuatro CSV;
 - proponer la separación entre carga, validación, proyección, compra, alertas e interfaz;
@@ -33,7 +33,7 @@ La variante `app_intelligent.py` puede consultar `gemini-3.6-flash` mediante el 
 
 Antes de cada consulta se selecciona un subconjunto relevante y limitado del DataFrame procesado, se ordena por severidad y se convierte a JSON con un esquema explícito. La respuesta también debe tener una estructura fija con texto, identificadores de evidencia y una advertencia opcional. El programa valida esos campos, comprueba que las evidencias hayan sido enviadas y rechaza respuestas que expongan secretos o introduzcan datos inexistentes.
 
-Durante el desarrollo no se proporcionó una clave real ni se afirmó haber validado una respuesta contra el servicio en vivo. Las rutas de éxito, límite `429`, respuesta inválida, prompt injection, ausencia de clave y fallback se prueban con clientes simulados. El modo local continúa disponible si Gemini no está configurado o falla.
+La clave de Gemini se configuró mediante secretos y no se escribió directamente en el código ni se compartió en el repositorio. Se comprobó desde la aplicación que el servicio podía responder utilizando los resultados calculados y devolver identificadores de evidencia. Las rutas de límite `429`, respuesta inválida, prompt injection, ausencia de clave y fallback también se cubren mediante clientes simulados para no depender del servicio externo durante las pruebas automatizadas. El modo local continúa disponible si Gemini no está configurado o falla.
 
 ## Ejemplo real de prompt utilizado
 
@@ -59,13 +59,42 @@ No se inventan conversaciones adicionales ni prompts que no ocurrieron.
 | Depender de la disponibilidad o cuota gratuita de Gemini | Los errores, tiempos de espera y respuestas `429` activan el asistente local y no detienen el resto de la aplicación. |
 | Declarar validaciones no ejecutadas | Los resultados finales deben reportar únicamente comandos realmente completados. |
 
-## Partes que requieren revisión personal del candidato
+## Revisión y participación personal
 
-Antes de entregar, el candidato debe completar honestamente estos marcadores:
+### Qué revisé y qué cambios propuse
 
-- **[PENDIENTE — describir qué código revisaste manualmente y qué cambios propios hiciste]**
-- **[PENDIENTE — explicar qué aprendiste o qué decisión técnica defenderías en entrevista]**
-- **[PENDIENTE — indicar si utilizaste otra herramienta de IA además de Codex]**
-- **[PENDIENTE — agregar cualquier prompt adicional que realmente hayas utilizado]**
+Probé personalmente la aplicación en el navegador y recorrí sus diferentes secciones. Revisé las alertas, recomendaciones, gráficos, filtros, comparación entre sucursales, asistente local, chat con Gemini y archivos descargables. También comprobé casos importantes como la mozzarella omitida, el faltante de harina, el valor atípico de pepperoni y los sobrepedidos de cebolla y albahaca.
 
-También debe revisar visualmente la aplicación completa, grabar el video con sus propias palabras y aprobar el contenido final antes de publicarlo.
+Durante el proceso fui proponiendo cambios para que la herramienta fuera más fácil de entender. Por ejemplo, pedí simplificar algunas explicaciones técnicas, aclarar qué significa un formato de compra, mejorar los filtros, separar el asistente en su propia pestaña y hacer que las comparaciones entre sucursales fueran más claras. También trabajé en detalles visuales como la barra lateral, el tamaño de los gráficos, el cursor de pizza y los reportes descargables en Excel.
+
+### Qué aprendí y qué decisión defendería
+
+Aprendí que no siempre es necesario utilizar un modelo complicado para construir una buena solución de inteligencia artificial. En este reto era más importante que los cálculos fueran correctos, claros y fáciles de explicar.
+
+Una decisión que defendería en una entrevista es el método de proyección utilizado. La herramienta detecta semanas atípicas con MAD y utiliza una tendencia lineal solamente cuando realmente existe suficiente evidencia. Cuando no hay una tendencia fuerte, usa un promedio limpio. Me parece una buena decisión porque evita generar alertas falsas y permite explicar de dónde salió cada recomendación.
+
+También defendería que Gemini no haga los cálculos. Python calcula el consumo esperado, la necesidad y los formatos recomendados. Gemini solamente ayuda a explicar esos resultados en un lenguaje más natural.
+
+### Otras herramientas de IA utilizadas
+
+Además de ChatGPT y Codex para apoyar el desarrollo, integré y probé Gemini dentro de la aplicación utilizando el SDK oficial `google-genai`.
+
+Gemini se usa solamente para responder preguntas sobre resultados que Python ya calculó. La clave se configuró mediante secretos y nunca se escribió directamente en el código ni se subió a GitHub. También se dejó el asistente local como respaldo por si Gemini no está configurado, falla o alcanza un límite de uso.
+
+### Otros prompts utilizados
+
+Durante el desarrollo también fui haciendo solicitudes más específicas, como:
+
+- revisar completamente la comparación de órdenes entre sucursales;
+- evitar que una misma línea se contara varias veces por tener diferentes alertas;
+- explicar resultados estadísticos con palabras más sencillas;
+- rediseñar el dashboard tomando como referencia la página pública de Barrio Pizza;
+- mejorar la barra lateral, los gráficos, los filtros y la navegación;
+- agregar y ajustar el cursor de pizza;
+- integrar Gemini sin permitirle cambiar o recalcular cifras;
+- ordenar mejor el chat y agregar preguntas sugeridas;
+- explicar dentro del dashboard qué significa un formato de compra;
+- crear reportes Excel más visuales como alternativa a los CSV;
+- probar el funcionamiento, la compilación y el arranque de la aplicación.
+
+La aplicación completa todavía debe presentarse y explicarse en el video con palabras propias. Ninguna recomendación de compra debe aprobarse automáticamente sin revisión humana.
