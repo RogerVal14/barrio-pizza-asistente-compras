@@ -148,7 +148,8 @@ Todos los `merge` relevantes declaran su cardinalidad con `validate="many_to_one
 │   └── test_design_system.py
 ├── docs/
 │   ├── RETO_ORIGINAL.md
-│   └── guion_video.md
+│   ├── guion_video.md
+│   └── orden_compra_demo_video.csv
 ├── requirements.txt
 ├── pytest.ini
 ├── README.md
@@ -158,6 +159,8 @@ Todos los `merge` relevantes declaran su cardinalidad con `validate="many_to_one
     ├── config.toml
     └── secrets.toml.example
 ```
+
+`docs/orden_compra_demo_video.csv` es una orden alternativa preparada para demostrar la carga y el recálculo del simulador. No reemplaza `datos/orden_compra_semana.csv` ni modifica los datos originales.
 
 ## Instalación local
 

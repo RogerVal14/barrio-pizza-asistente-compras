@@ -58,9 +58,13 @@ Cambiar a **Marbella** y **Pepperoni**.
 
 ## 2:40–3:20 · Pestaña 4: Mesa de compra
 
-Abrir **Mesa de compra → Simulador** y modificar una cantidad.
+Abrir **Mesa de compra → Simulador** y cargar `docs/orden_compra_demo_video.csv`. Después, presionar **Usar archivo cargado**.
 
-> “La Mesa de compra permite cargar un nuevo CSV o editar la orden directamente. Cuando cambio una cantidad, la aplicación vuelve a validar y recalcula inmediatamente los diagnósticos. También puedo restablecer la orden original. Los datos inválidos o faltantes nunca se convierten silenciosamente en cero.”
+> “La Mesa de compra permite cargar un nuevo CSV o editar la orden directamente. Este archivo de demostración corrige las alertas originales y crea dos situaciones nuevas: Marbella pide 3 cajas de pepperoni cuando necesita 5, y Costa del Este pide 18 cajas de mozzarella cuando necesita 14. Al usar el archivo, la aplicación lo valida y recalcula inmediatamente los diagnósticos.”
+
+Editar el pepperoni de Marbella de **3** a **5** formatos.
+
+> “También puedo corregir una cantidad desde la tabla. Al cambiar el pepperoni de 3 a 5 cajas, el faltante desaparece inmediatamente. Los datos inválidos o faltantes nunca se convierten silenciosamente en cero y siempre puedo restablecer la orden original.”
 
 Abrir **Orden corregida** y luego **Paquetes por proveedor**.
 

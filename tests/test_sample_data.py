@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+from io import BytesIO
 from pathlib import Path
 
 import pytest
 
 from src.alerts import build_purchase_alerts
-from src.data_loader import load_data
+from src.data_loader import load_data, read_order_upload
 from src.forecasting import forecast_all
 from src.purchasing import build_purchase_review, unknown_order_lines
 from src.validation import validate_data
@@ -110,3 +111,33 @@ def test_minimum_expected_alerts(processed: tuple[object, ...]) -> None:
     assert (alerts["tipo_alerta"] == "SOBREPEDIDO").sum() >= 2
     assert (validated.incidencias["codigo"] == "INGREDIENTE_DESCONOCIDO").sum() >= 1
     assert len(outliers) >= 1
+
+
+def test_video_demo_order_is_valid_and_creates_expected_scenarios() -> None:
+    bundle = load_data(ROOT / "datos")
+    demo_path = ROOT / "docs" / "orden_compra_demo_video.csv"
+    demo_order = read_order_upload(BytesIO(demo_path.read_bytes()))
+    validated = validate_data(
+        bundle.catalogo,
+        bundle.historico,
+        bundle.inventario,
+        demo_order,
+    )
+    forecasts, _ = forecast_all(validated.historico, validated.combinaciones)
+    review = build_purchase_review(validated, forecasts, safety_margin=0)
+    alerts = build_purchase_alerts(review)
+
+    assert len(demo_order) == 88
+    assert validated.incidencias[validated.incidencias["nivel"] == "Error"].empty
+    assert set(alerts["tipo_alerta"]) == {"FALTANTE", "SOBREPEDIDO"}
+    assert len(alerts) == 2
+
+    pepperoni = line(review, "Marbella", "pepperoni")
+    assert pepperoni["formatos_ordenados"] == 3
+    assert pepperoni["formatos_recomendados"] == 5
+    assert pepperoni["estado"] == "FALTANTE"
+
+    mozzarella = line(review, "Costa del Este", "mozzarella")
+    assert mozzarella["formatos_ordenados"] == 18
+    assert mozzarella["formatos_recomendados"] == 14
+    assert mozzarella["estado"] == "SOBREPEDIDO"
