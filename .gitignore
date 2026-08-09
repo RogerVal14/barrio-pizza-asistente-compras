@@ -10,3 +10,6 @@ htmlcov/
 Thumbs.db
 .idea/
 .vscode/
+
+# Material personal para preparar la presentación; no publicar.
+docs/guion_video.md
