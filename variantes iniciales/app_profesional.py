@@ -36,7 +36,7 @@ from src.benchmarking import (
 from src.data_loader import DataBundle, load_data, read_order_upload
 from src.forecasting import forecast_all, week_number
 from src.purchasing import build_purchase_review, corrected_order, unknown_order_lines
-from src.reporting import build_alerts_excel, build_branch_excel
+from src.reporting import build_alerts_excel, build_behaviors_excel, build_branch_excel
 from src.ui_helpers import answer_local_question, dataframe_to_csv_bytes, friendly_review_table
 from src.validation import validate_data
 
@@ -1266,13 +1266,34 @@ def render_alert_center(alerts: pd.DataFrame, behaviors: pd.DataFrame) -> None:
                 "metodo_deteccion", "nivel_confianza", "accion_recomendada",
             ]
             table = behaviors[behavior_columns].copy()
-            st.download_button(
-                "Descargar comparación entre sucursales",
-                dataframe_to_csv_bytes(table),
-                file_name="comportamiento_inusual_sucursales.csv",
-                mime="text/csv",
-                width="stretch",
+            st.markdown(
+                "<div class='ops-note'><b>Reporte listo para compartir.</b> Resume qué debe "
+                "revisarse, explica la comparación en lenguaje sencillo y conserva los ratios "
+                "y el método en una hoja técnica separada.</div>",
+                unsafe_allow_html=True,
             )
+            st.download_button(
+                "📊 Descargar reporte visual de comparación (Excel)",
+                build_behaviors_excel(behaviors),
+                file_name="reporte_comparacion_entre_sucursales.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                width="stretch",
+                type="primary",
+                key="pro_download_behaviors_excel",
+            )
+            with st.expander("Opciones avanzadas de descarga"):
+                st.caption(
+                    "El CSV conserva los campos técnicos para análisis. Para revisar o compartir "
+                    "los casos, recomendamos el reporte Excel anterior."
+                )
+                st.download_button(
+                    "Descargar datos técnicos en CSV",
+                    dataframe_to_csv_bytes(table),
+                    file_name="comportamiento_inusual_sucursales.csv",
+                    mime="text/csv",
+                    width="stretch",
+                    key="pro_download_behaviors_csv",
+                )
 
 
 def render_branch_workspace(

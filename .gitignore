@@ -8,6 +8,7 @@ htmlcov/
 .streamlit/secrets.toml
 .DS_Store
 Thumbs.db
+~$*
 .idea/
 .vscode/
 

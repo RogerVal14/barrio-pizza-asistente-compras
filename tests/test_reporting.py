@@ -7,7 +7,7 @@ from zipfile import ZipFile
 
 import pandas as pd
 
-from src.reporting import build_alerts_excel, build_branch_excel
+from src.reporting import build_alerts_excel, build_behaviors_excel, build_branch_excel
 
 
 def _xlsx_text(content: bytes) -> str:
@@ -126,6 +126,71 @@ def test_empty_alerts_still_produce_an_openable_report() -> None:
     )
 
     content = build_alerts_excel(empty_alerts)
+    xml = _xlsx_text(content)
+
+    assert content.startswith(b"PK")
+    assert "No hay registros para mostrar." in xml
+
+
+def test_behaviors_report_explains_comparison_in_business_language() -> None:
+    behaviors = pd.DataFrame(
+        [
+            {
+                "severidad": "Media",
+                "diagnostico_principal": "Sobrepedido",
+                "direccion": "MUY POR ENCIMA",
+                "sucursal": "Via Argentina",
+                "ingrediente_id": "albahaca",
+                "ingrediente": "Albahaca fresca",
+                "proveedor": "AgroFresco",
+                "es_perecedero": "Sí",
+                "formato_compra": "Paquete 250 gr",
+                "unidad_base": "kg",
+                "formatos_ordenados": 20,
+                "formatos_recomendados": 2,
+                "diferencia_formatos": 18,
+                "cantidad_ordenada_base": 5,
+                "cantidad_recomendada_base": 0.5,
+                "factor_vs_recomendacion": 10.0,
+                "ratio_sucursal": "10×",
+                "mediana_factor_pares": 1.0,
+                "ratio_mediana_pares": "1×",
+                "cantidad_pares": 3,
+                "metodo_deteccion": "Umbral relativo con MAD igual a cero",
+                "nivel_confianza": "Moderada",
+                "estado_compra": "SOBREPEDIDO",
+                "razon": "La orden está muy por encima del patrón comparable.",
+                "accion_recomendada": "Retirar 18 paquetes de 250 gr.",
+            }
+        ]
+    )
+
+    content = build_behaviors_excel(behaviors)
+    xml = _xlsx_text(content)
+
+    assert content.startswith(b"PK")
+    assert "Resumen" in xml
+    assert "Casos para revisar" in xml
+    assert "Detalle técnico" in xml
+    assert "20 paquetes de 250 gr" in xml
+    assert "2 paquetes de 250 gr" in xml
+    assert "Sobran 18 paquetes de 250 gr" in xml
+    assert "Esta sucursal cubre 1.000% de su recomendación" in xml
+    assert "Moderada · 3 sucursales comparadas" in xml
+    assert "no debe contarse como un producto adicional" in xml
+
+
+def test_empty_behaviors_still_produce_an_openable_report() -> None:
+    empty_behaviors = pd.DataFrame(
+        columns=[
+            "severidad",
+            "sucursal",
+            "ingrediente",
+            "nivel_confianza",
+        ]
+    )
+
+    content = build_behaviors_excel(empty_behaviors)
     xml = _xlsx_text(content)
 
     assert content.startswith(b"PK")

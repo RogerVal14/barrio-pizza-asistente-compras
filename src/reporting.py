@@ -71,6 +71,38 @@ def _difference_phrase(value: object, format_name: object) -> str:
     return "Sin diferencia"
 
 
+def _percentage_phrase(value: object) -> str | None:
+    """Convierte un factor, por ejemplo 1.25, en un porcentaje legible."""
+
+    if value is None or pd.isna(value) or isinstance(value, bool):
+        return None
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not pd.notna(numeric):
+        return None
+    formatted = f"{numeric * 100:,.0f}".replace(",", ".")
+    return f"{formatted}%"
+
+
+def _behavior_comparison_phrase(row: object) -> str:
+    """Explica la referencia entre sucursales sin depender de ratios técnicos."""
+
+    peer_count = _integer(getattr(row, "cantidad_pares", None)) or 0
+    branch_percentage = _percentage_phrase(getattr(row, "factor_vs_recomendacion", None))
+    peer_percentage = _percentage_phrase(getattr(row, "mediana_factor_pares", None))
+    if branch_percentage is not None and peer_percentage is not None:
+        return (
+            f"Esta sucursal cubre {branch_percentage} de su recomendación; "
+            f"las otras {peer_count} cubren cerca de {peer_percentage}."
+        )
+    return (
+        "La recomendación de esta sucursal es cero. La comparación revisa el exceso "
+        f"en formatos frente a {peer_count} sucursales."
+    )
+
+
 def _workbook_formats(workbook: xlsxwriter.Workbook) -> dict[str, Any]:
     return {
         "title": workbook.add_format(
@@ -348,6 +380,262 @@ def build_alerts_excel(alerts: pd.DataFrame) -> bytes:
         start_row=4,
         widths={"Severidad": 13, "Diagnóstico": 20, "Sucursal": 20, "Ingrediente": 22, "Pedido actual": 24, "Recomendación": 24, "Ajuste necesario": 26, "Proveedor": 24, "Perecedero": 13, "Por qué importa": 42, "Acción recomendada": 48, "Evidencia": 14},
         severity_column="Severidad",
+    )
+
+    workbook.close()
+    return output.getvalue()
+
+
+def _friendly_behaviors(behaviors: pd.DataFrame) -> pd.DataFrame:
+    """Traduce la comparación entre sucursales a lenguaje de compras."""
+
+    rows: list[dict[str, object]] = []
+    ordered = behaviors.copy()
+    if not ordered.empty:
+        ordered["_orden_severidad"] = ordered["severidad"].map(SEVERITY_RANK).fillna(99)
+        ordered = ordered.sort_values(
+            ["_orden_severidad", "sucursal", "ingrediente"],
+            na_position="last",
+        )
+
+    for row in ordered.itertuples(index=False):
+        format_name = getattr(row, "formato_compra", None)
+        peer_count = _integer(getattr(row, "cantidad_pares", None)) or 0
+        direction = str(getattr(row, "direccion", ""))
+        signal = (
+            "Pedido mucho mayor que el patrón"
+            if direction == "MUY POR ENCIMA"
+            else "Pedido mucho menor que el patrón"
+        )
+        diagnosis = str(getattr(row, "diagnostico_principal", "Revisión de compra"))
+        if diagnosis == "Producto omitido":
+            signal = "Producto omitido; comparación como contexto"
+        rows.append(
+            {
+                "Diagnóstico principal": diagnosis,
+                "Señal comparativa": signal,
+                "Sucursal": getattr(row, "sucursal", ""),
+                "Ingrediente": getattr(row, "ingrediente", ""),
+                "Pedido actual": _purchase_phrase(
+                    getattr(row, "formatos_ordenados", None), format_name
+                ),
+                "Recomendación": _purchase_phrase(
+                    getattr(row, "formatos_recomendados", None), format_name
+                ),
+                "Ajuste de la orden": _difference_phrase(
+                    getattr(row, "diferencia_formatos", None), format_name
+                ),
+                "Comparación sencilla": _behavior_comparison_phrase(row),
+                "Qué tan confiable es": (
+                    f"{getattr(row, 'nivel_confianza', '')} · "
+                    f"{peer_count} sucursales comparadas"
+                ),
+                "Proveedor": getattr(row, "proveedor", ""),
+                "Perecedero": getattr(row, "es_perecedero", ""),
+                "Qué debes revisar": getattr(row, "accion_recomendada", ""),
+                "Método utilizado": getattr(row, "metodo_deteccion", ""),
+            }
+        )
+
+    return pd.DataFrame(
+        rows,
+        columns=[
+            "Diagnóstico principal",
+            "Señal comparativa",
+            "Sucursal",
+            "Ingrediente",
+            "Pedido actual",
+            "Recomendación",
+            "Ajuste de la orden",
+            "Comparación sencilla",
+            "Qué tan confiable es",
+            "Proveedor",
+            "Perecedero",
+            "Qué debes revisar",
+            "Método utilizado",
+        ],
+    )
+
+
+def _technical_behaviors(behaviors: pd.DataFrame) -> pd.DataFrame:
+    """Conserva la evidencia técnica en una hoja secundaria del reporte."""
+
+    columns = {
+        "diagnostico_principal": "Diagnóstico principal",
+        "direccion": "Dirección comparativa",
+        "sucursal": "Sucursal",
+        "ingrediente_id": "Ingrediente ID",
+        "ingrediente": "Ingrediente",
+        "proveedor": "Proveedor",
+        "formato_compra": "Formato de compra",
+        "unidad_base": "Unidad base",
+        "formatos_ordenados": "Formatos ordenados",
+        "formatos_recomendados": "Formatos recomendados",
+        "diferencia_formatos": "Diferencia de formatos",
+        "cantidad_ordenada_base": "Cantidad ordenada base",
+        "cantidad_recomendada_base": "Cantidad recomendada base",
+        "ratio_sucursal": "Ratio de la sucursal",
+        "ratio_mediana_pares": "Mediana de los pares",
+        "cantidad_pares": "Sucursales comparadas",
+        "metodo_deteccion": "Método utilizado",
+        "nivel_confianza": "Nivel de confianza",
+        "estado_compra": "Estado de compra",
+        "razon": "Razón técnica",
+        "accion_recomendada": "Acción recomendada",
+    }
+    available = [column for column in columns if column in behaviors.columns]
+    return behaviors[available].rename(columns=columns).copy()
+
+
+def build_behaviors_excel(behaviors: pd.DataFrame) -> bytes:
+    """Construye un reporte visual de comportamientos inusuales entre sucursales."""
+
+    output = BytesIO()
+    workbook = xlsxwriter.Workbook(output, {"in_memory": True})
+    workbook.set_properties(
+        {
+            "title": "Comportamiento inusual entre sucursales",
+            "subject": "Contexto comparativo para revisar órdenes de compra",
+            "company": "Barrio Pizza",
+            "comments": (
+                "Las señales comparativas no confirman un error y requieren revisión humana."
+            ),
+        }
+    )
+    formats = _workbook_formats(workbook)
+    friendly = _friendly_behaviors(behaviors)
+
+    summary = workbook.add_worksheet("Resumen")
+    _setup_sheet(summary)
+    _write_title(
+        summary,
+        formats,
+        "BARRIO PIZZA | COMPARACIÓN ENTRE SUCURSALES",
+        (
+            f"Generado el {date.today().strftime('%d/%m/%Y')} · Estas señales invitan "
+            "a revisar; no confirman un error."
+        ),
+        last_column=10,
+    )
+    branch_count = int(behaviors.get("sucursal", pd.Series(dtype="object")).dropna().nunique())
+    ingredient_count = int(
+        behaviors.get("ingrediente", pd.Series(dtype="object")).dropna().nunique()
+    )
+    moderate_count = int(
+        (behaviors.get("nivel_confianza", pd.Series(dtype="object")) == "Moderada").sum()
+    )
+    _write_cards(
+        summary,
+        formats,
+        [
+            ("Casos para revisar", len(behaviors)),
+            ("Sucursales involucradas", branch_count),
+            ("Ingredientes involucrados", ingredient_count),
+            ("Confianza moderada", moderate_count),
+        ],
+    )
+    summary.merge_range(
+        8,
+        0,
+        9,
+        10,
+        (
+            "Lectura correcta: una misma línea puede ser producto omitido, faltante o "
+            "sobrepedido y, al mismo tiempo, verse inusual frente a otras sucursales. "
+            "Sigue siendo una sola línea de compra y no debe contarse como un producto adicional."
+        ),
+        formats["note"],
+    )
+    summary.merge_range(11, 0, 11, 10, "QUÉ DEBES REVISAR", formats["section"])
+    summary_columns = [
+        "Diagnóstico principal",
+        "Sucursal",
+        "Ingrediente",
+        "Pedido actual",
+        "Recomendación",
+        "Ajuste de la orden",
+        "Comparación sencilla",
+        "Qué tan confiable es",
+        "Qué debes revisar",
+    ]
+    _write_dataframe(
+        summary,
+        formats,
+        friendly[summary_columns].head(8),
+        start_row=12,
+        widths={
+            "Diagnóstico principal": 22,
+            "Sucursal": 20,
+            "Ingrediente": 22,
+            "Pedido actual": 25,
+            "Recomendación": 25,
+            "Ajuste de la orden": 27,
+            "Comparación sencilla": 44,
+            "Qué tan confiable es": 27,
+            "Qué debes revisar": 48,
+        },
+    )
+
+    cases = workbook.add_worksheet("Casos para revisar")
+    _setup_sheet(cases)
+    _write_title(
+        cases,
+        formats,
+        "CASOS PARA REVISAR",
+        (
+            "Primero conserva el diagnóstico de compra; la comparación con otras "
+            "sucursales aparece como contexto secundario."
+        ),
+        last_column=len(friendly.columns) - 1,
+    )
+    _write_dataframe(
+        cases,
+        formats,
+        friendly,
+        start_row=4,
+        widths={
+            "Diagnóstico principal": 22,
+            "Señal comparativa": 34,
+            "Sucursal": 20,
+            "Ingrediente": 22,
+            "Pedido actual": 25,
+            "Recomendación": 25,
+            "Ajuste de la orden": 27,
+            "Comparación sencilla": 45,
+            "Qué tan confiable es": 27,
+            "Proveedor": 24,
+            "Perecedero": 13,
+            "Qué debes revisar": 48,
+            "Método utilizado": 45,
+        },
+    )
+
+    technical = _technical_behaviors(behaviors)
+    technical_sheet = workbook.add_worksheet("Detalle técnico")
+    _setup_sheet(technical_sheet)
+    _write_title(
+        technical_sheet,
+        formats,
+        "EVIDENCIA TÉCNICA DE LA COMPARACIÓN",
+        (
+            "Ratios, cantidad de pares, método y confianza. Esta hoja sirve para "
+            "auditar la señal, no para contar alertas adicionales."
+        ),
+        last_column=max(len(technical.columns) - 1, 0),
+    )
+    _write_dataframe(
+        technical_sheet,
+        formats,
+        technical,
+        start_row=4,
+        widths={
+            str(column): (
+                48
+                if column in {"Razón técnica", "Acción recomendada", "Método utilizado"}
+                else 25
+            )
+            for column in technical.columns
+        },
     )
 
     workbook.close()
