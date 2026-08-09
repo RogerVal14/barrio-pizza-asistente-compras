@@ -533,6 +533,51 @@ html, body, [class*="css"] {
 .ops-note--human { background: var(--ops-red-soft); border-color: #efc7c2; }
 .ops-note b { color: var(--ops-ink); }
 
+.ops-file-source {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 1rem;
+  padding: 1rem 1.1rem;
+  color: #264433;
+  background: #edf5ef;
+  border: 1px solid #b9d5c0;
+  border-left: 6px solid var(--ops-green);
+  border-radius: 13px;
+}
+.ops-file-source__label {
+  display: block;
+  margin-bottom: .2rem;
+  color: #44634f;
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.ops-file-source__name {
+  color: var(--ops-ink);
+  font-size: 1rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.ops-file-source__detail {
+  margin-top: .15rem;
+  color: #52665a;
+  font-size: .76rem;
+}
+.ops-file-source__badge {
+  flex: 0 0 auto;
+  padding: .42rem .7rem;
+  color: #fff;
+  background: var(--ops-green);
+  border-radius: 999px;
+  font-size: .7rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
 div[data-testid="stButtonGroup"] {
   margin: 1.05rem 0 .25rem;
   padding: .36rem;
@@ -1531,6 +1576,29 @@ def render_order_workbench(bundle: DataBundle, pipeline: dict[str, object]) -> N
     )
 
     with simulation_tab:
+        source = st.session_state.pro_order_source
+        source_name = escape(str(source["name"]))
+        source_kind = str(source["kind"])
+        source_edited = bool(source.get("edited", False))
+        source_label = "CSV cargado" if source_kind == "uploaded" else "Orden original"
+        if source_edited:
+            source_label += " · editada"
+        edited_note = " Incluye cambios hechos en la tabla." if source_edited else ""
+        st.markdown(
+            f"""
+            <div class="ops-file-source">
+              <div>
+                <span class="ops-file-source__label">Orden activa en esta sesión</span>
+                <div class="ops-file-source__name">{source_name}</div>
+                <div class="ops-file-source__detail">
+                  {len(st.session_state.pro_working_order)} líneas · Los cálculos usan este archivo.{edited_note}
+                </div>
+              </div>
+              <span class="ops-file-source__badge">{escape(source_label)}</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         upload_column, status_column = st.columns([1.45, .55], gap="large")
         with upload_column:
             uploaded = st.file_uploader(
@@ -1564,6 +1632,11 @@ def render_order_workbench(bundle: DataBundle, pipeline: dict[str, object]) -> N
                             numeric = pd.to_numeric(current["cantidad_formatos"], errors="coerce")
                             current["cantidad_formatos"] = numeric.where(numeric.notna(), current["cantidad_formatos"])
                             st.session_state.pro_working_order = current
+                            st.session_state.pro_order_source = {
+                                "kind": "uploaded",
+                                "name": uploaded.name,
+                                "edited": False,
+                            }
                             st.session_state.pro_editor_version += 1
                             st.rerun()
                 except Exception as exc:
@@ -1572,9 +1645,9 @@ def render_order_workbench(bundle: DataBundle, pipeline: dict[str, object]) -> N
             errors = pipeline["quality"]
             errors = errors[errors["nivel"] == "Error"] if not errors.empty else errors
             metric_card(
-                "Estado del archivo",
-                "Revisar" if len(errors) else "Listo",
-                f"{len(errors)} errores de datos conservados",
+                "Orden en uso",
+                "CSV activo" if source_kind == "uploaded" else "Original",
+                f"{len(errors)} errores · {source_label}",
                 "danger" if len(errors) else "success",
             )
 
@@ -1583,6 +1656,11 @@ def render_order_workbench(bundle: DataBundle, pipeline: dict[str, object]) -> N
             original = bundle.orden.copy()
             original["cantidad_formatos"] = pd.to_numeric(original["cantidad_formatos"], errors="coerce")
             st.session_state.pro_working_order = original
+            st.session_state.pro_order_source = {
+                "kind": "original",
+                "name": "orden_compra_semana.csv",
+                "edited": False,
+            }
             st.session_state.pro_editor_version += 1
             st.rerun()
         controls[1].metric("Líneas actuales", len(st.session_state.pro_working_order))
@@ -1612,6 +1690,9 @@ def render_order_workbench(bundle: DataBundle, pipeline: dict[str, object]) -> N
         )
         if not edited.reset_index(drop=True).equals(current.reset_index(drop=True)):
             st.session_state.pro_working_order = edited.reset_index(drop=True)
+            updated_source = dict(st.session_state.pro_order_source)
+            updated_source["edited"] = True
+            st.session_state.pro_order_source = updated_source
             st.rerun()
 
     corrected = pipeline["corrected"].copy()
@@ -2086,6 +2167,12 @@ if "pro_working_order" not in st.session_state:
     st.session_state.pro_working_order = initial_order
 if "pro_editor_version" not in st.session_state:
     st.session_state.pro_editor_version = 0
+if "pro_order_source" not in st.session_state:
+    st.session_state.pro_order_source = {
+        "kind": "original",
+        "name": "orden_compra_semana.csv",
+        "edited": False,
+    }
 
 weeks = bundle.historico.get("semana", pd.Series(dtype="object")).dropna().astype(str)
 last_week = max(weeks, key=week_number) if not weeks.empty else "sin semana"

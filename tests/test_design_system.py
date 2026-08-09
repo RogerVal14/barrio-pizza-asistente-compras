@@ -70,6 +70,11 @@ def test_professional_dashboard_uses_barrio_brand_system() -> None:
     assert "Descargar revisión visual de" in source
     assert "Opciones avanzadas de descarga" in source
     assert "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" in source
+    assert "ops-file-source" in source
+    assert "Orden activa en esta sesión" in source
+    assert "pro_order_source" in source
+    assert '"kind": "uploaded"' in source
+    assert '"kind": "original"' in source
 
 
 def test_intelligent_assistant_inherits_brand_hierarchy() -> None:
