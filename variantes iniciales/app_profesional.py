@@ -636,6 +636,108 @@ html, body, [class*="css"] {
   text-transform: uppercase;
 }
 
+.ops-attention-grid {
+  display: grid;
+  grid-template-columns: minmax(0, .9fr) minmax(0, 1.4fr);
+  gap: 1rem;
+  margin: 1rem 0;
+  align-items: start;
+}
+.ops-attention-panel {
+  min-width: 0;
+  padding: 1rem;
+  background: var(--ops-paper);
+  border: 1px solid var(--ops-line);
+  border-top: 5px solid var(--ops-blue);
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(35,31,32,.05);
+}
+.ops-attention-panel[data-kind="error"] { border-top-color: var(--ops-red); }
+.ops-attention-panel[data-kind="change"] { border-top-color: var(--ops-amber); }
+.ops-attention-panel__header {
+  display: flex;
+  justify-content: space-between;
+  gap: .75rem;
+  align-items: flex-start;
+  margin-bottom: .8rem;
+}
+.ops-attention-panel__kicker {
+  display: block;
+  margin-bottom: .15rem;
+  color: var(--ops-muted);
+  font-size: .64rem;
+  font-weight: 850;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.ops-attention-panel__title {
+  color: var(--ops-ink);
+  font-size: 1rem;
+  font-weight: 850;
+}
+.ops-attention-panel__count {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  min-width: 42px;
+  height: 42px;
+  padding: 0 .5rem;
+  color: #fff;
+  background: var(--ops-blue);
+  border-radius: 11px;
+  font-family: var(--ops-font-display);
+  font-size: 1.45rem;
+  font-weight: 900;
+}
+.ops-attention-panel[data-kind="error"] .ops-attention-panel__count { background: var(--ops-red); }
+.ops-attention-panel[data-kind="change"] .ops-attention-panel__count { background: var(--ops-amber); }
+.ops-mini-card {
+  margin-top: .55rem;
+  padding: .72rem .78rem;
+  background: #f5f1eb;
+  border: 1px solid #e2dbd2;
+  border-left: 4px solid var(--ops-blue);
+  border-radius: 9px;
+}
+.ops-mini-card[data-kind="error"] { border-left-color: var(--ops-red); }
+.ops-mini-card[data-kind="change"] { border-left-color: var(--ops-amber); }
+.ops-mini-card__label {
+  display: block;
+  color: var(--ops-muted);
+  font-size: .62rem;
+  font-weight: 850;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.ops-mini-card__title {
+  display: block;
+  margin-top: .12rem;
+  color: var(--ops-ink);
+  font-size: .79rem;
+  font-weight: 850;
+  line-height: 1.35;
+}
+.ops-mini-card__body {
+  display: block;
+  margin-top: .25rem;
+  color: #4d4842;
+  font-size: .72rem;
+  line-height: 1.4;
+}
+.ops-mini-card__action {
+  display: block;
+  margin-top: .35rem;
+  color: var(--ops-ink);
+  font-size: .73rem;
+  font-weight: 780;
+  line-height: 1.4;
+}
+.ops-attention-panel__more {
+  margin: .7rem 0 0;
+  color: var(--ops-muted);
+  font-size: .68rem;
+}
+
 div[data-testid="stButtonGroup"] {
   margin: 1.05rem 0 .25rem;
   padding: .36rem;
@@ -741,6 +843,7 @@ div.stButton > button:hover, div.stDownloadButton > button:hover,
   }
   .ops-purchase-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ops-workflow { grid-template-columns: 1fr; }
+  .ops-attention-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
   .ops-alert__facts { grid-template-columns: 1fr; }
@@ -1645,6 +1748,98 @@ def render_branch_workspace(
                 )
 
 
+def _safe_card_value(value: object, fallback: str = "Sin dato") -> str:
+    """Convierte un valor de datos en texto seguro para una tarjeta visual."""
+    if value is None or (not isinstance(value, (list, dict)) and pd.isna(value)):
+        return fallback
+    text = str(value).strip()
+    return text if text else fallback
+
+
+def _workbench_attention_panel(
+    *,
+    kind: str,
+    kicker: str,
+    title: str,
+    total: int,
+    cards: list[str],
+    empty_message: str,
+    visible_limit: int,
+) -> str:
+    """Construye un panel compacto sin ocultar que existen más resultados."""
+    if cards:
+        content = "".join(cards)
+        remaining = max(total - visible_limit, 0)
+        more = (
+            f'<p class="ops-attention-panel__more">Hay {remaining} resultado(s) adicional(es). '
+            "Revísalos en el paso 2.</p>"
+            if remaining
+            else ""
+        )
+    else:
+        content = (
+            f'<div class="ops-mini-card" data-kind="{kind}">'
+            f'<span class="ops-mini-card__body">{escape(empty_message)}</span></div>'
+        )
+        more = ""
+    return f"""
+      <section class="ops-attention-panel" data-kind="{kind}">
+        <div class="ops-attention-panel__header">
+          <div>
+            <span class="ops-attention-panel__kicker">{escape(kicker)}</span>
+            <div class="ops-attention-panel__title">{escape(title)}</div>
+          </div>
+          <span class="ops-attention-panel__count">{total}</span>
+        </div>
+        {content}{more}
+      </section>
+    """
+
+
+def _quality_cards(quality_errors: pd.DataFrame, limit: int = 5) -> list[str]:
+    """Resume errores de datos como decisiones comprensibles y visibles."""
+    cards: list[str] = []
+    for _, row in quality_errors.head(limit).iterrows():
+        branch = _safe_card_value(row.get("sucursal"), "Toda la revisión")
+        ingredient = _safe_card_value(row.get("ingrediente_id"), "Dato general")
+        detail = _safe_card_value(row.get("detalle"), "Requiere corrección")
+        why = _safe_card_value(
+            row.get("por_que_importa"),
+            "Debe corregirse antes de aprobar la compra.",
+        )
+        cards.append(
+            '<article class="ops-mini-card" data-kind="error">'
+            '<span class="ops-mini-card__label">⚠ Corregir antes de aprobar</span>'
+            f'<span class="ops-mini-card__title">{escape(branch)} · {escape(ingredient)}</span>'
+            f'<span class="ops-mini-card__body">{escape(detail)}</span>'
+            f'<span class="ops-mini-card__action">Por qué importa: {escape(why)}</span>'
+            "</article>"
+        )
+    return cards
+
+
+def _change_cards(action_rows: pd.DataFrame, limit: int = 6) -> list[str]:
+    """Presenta cada ajuste sugerido con pedido, recomendación y acción."""
+    cards: list[str] = []
+    for _, row in action_rows.head(limit).iterrows():
+        decision = _safe_card_value(row.get("Decisión"), "Revisar")
+        branch = _safe_card_value(row.get("Sucursal"))
+        ingredient = _safe_card_value(row.get("Ingrediente"))
+        ordered = _safe_card_value(row.get("Pedido actual"))
+        recommended = _safe_card_value(row.get("Cantidad sugerida"))
+        change = _safe_card_value(row.get("Cambio"), "Revisar la cantidad")
+        cards.append(
+            '<article class="ops-mini-card" data-kind="change">'
+            f'<span class="ops-mini-card__label">↕ {escape(decision)}</span>'
+            f'<span class="ops-mini-card__title">{escape(branch)} · {escape(ingredient)}</span>'
+            f'<span class="ops-mini-card__body">Pedido: {escape(ordered)} → '
+            f'Sugerido: {escape(recommended)}</span>'
+            f'<span class="ops-mini-card__action">Qué hacer: {escape(change)}</span>'
+            "</article>"
+        )
+    return cards
+
+
 def render_order_workbench(bundle: DataBundle, pipeline: dict[str, object]) -> None:
     section_header(
         "Ejecución",
@@ -1656,11 +1851,11 @@ def render_order_workbench(bundle: DataBundle, pipeline: dict[str, object]) -> N
         <div class="ops-workflow">
           <div class="ops-workflow__step">
             <span class="ops-workflow__number">1</span>
-            <div><b>Preparar la orden</b><span>Carga un CSV o cambia cantidades manualmente.</span></div>
+            <div><b>Ver qué requiere atención</b><span>Distingue errores de datos y ajustes de compra.</span></div>
           </div>
           <div class="ops-workflow__step">
             <span class="ops-workflow__number">2</span>
-            <div><b>Revisar los cambios</b><span>Comprueba qué agregar, aumentar o retirar.</span></div>
+            <div><b>Revisar o ajustar</b><span>Comprueba qué agregar, aumentar o retirar.</span></div>
           </div>
           <div class="ops-workflow__step">
             <span class="ops-workflow__number">3</span>
@@ -1671,7 +1866,7 @@ def render_order_workbench(bundle: DataBundle, pipeline: dict[str, object]) -> N
         unsafe_allow_html=True,
     )
     prepare_tab, review_tab, supplier_tab = st.tabs(
-        ["1 · Preparar orden", "2 · Revisar cambios", "3 · Descargar por proveedor"]
+        ["1 · Qué debes revisar", "2 · Revisar o ajustar", "3 · Descargar por proveedor"]
     )
 
     corrected = pipeline["corrected"].copy()
@@ -1695,22 +1890,28 @@ def render_order_workbench(bundle: DataBundle, pipeline: dict[str, object]) -> N
             "cantidad_formatos": "Cantidad pedida",
         }
     )
+    quality_errors = pipeline["quality"]
+    quality_errors = (
+        quality_errors[quality_errors["nivel"] == "Error"]
+        if not quality_errors.empty
+        else quality_errors
+    )
+    source = st.session_state.pro_order_source
+    source_name = escape(str(source["name"]))
+    source_kind = str(source["kind"])
+    source_edited = bool(source.get("edited", False))
+    source_label = "CSV cargado" if source_kind == "uploaded" else "Orden original"
+    if source_edited:
+        source_label += " · editada"
+    edited_note = " Incluye cambios hechos en la tabla." if source_edited else ""
 
     with prepare_tab:
         st.markdown(
-            "<div class='ops-step-title'>Paso 1. Elige la orden que quieres revisar</div>"
-            "<div class='ops-step-help'>La orden activa se conserva durante esta sesión. "
-            "Nada se guarda en los CSV originales.</div>",
+            "<div class='ops-step-title'>Paso 1. Mira primero lo que requiere atención</div>"
+            "<div class='ops-step-help'>Los errores de datos y los cambios de compra se "
+            "muestran por separado para evitar confundirlos.</div>",
             unsafe_allow_html=True,
         )
-        source = st.session_state.pro_order_source
-        source_name = escape(str(source["name"]))
-        source_kind = str(source["kind"])
-        source_edited = bool(source.get("edited", False))
-        source_label = "CSV cargado" if source_kind == "uploaded" else "Orden original"
-        if source_edited:
-            source_label += " · editada"
-        edited_note = " Incluye cambios hechos en la tabla." if source_edited else ""
         st.markdown(
             f"""
             <div class="ops-file-source">
@@ -1726,78 +1927,96 @@ def render_order_workbench(bundle: DataBundle, pipeline: dict[str, object]) -> N
             """,
             unsafe_allow_html=True,
         )
-
-        quality_errors = pipeline["quality"]
-        quality_errors = (
-            quality_errors[quality_errors["nivel"] == "Error"]
-            if not quality_errors.empty
-            else quality_errors
+        quality_limit = 5
+        change_limit = 6
+        quality_panel = _workbench_attention_panel(
+            kind="error",
+            kicker="Primero corrige los datos",
+            title="Errores que debes corregir",
+            total=len(quality_errors),
+            cards=_quality_cards(quality_errors, quality_limit),
+            empty_message="No hay errores que impidan confiar en las líneas calculadas.",
+            visible_limit=quality_limit,
         )
-        status_columns = st.columns(3)
-        status_columns[0].metric("Líneas en la orden", len(st.session_state.pro_working_order))
-        status_columns[1].metric("Errores que debes corregir", len(quality_errors))
-        status_columns[2].metric("Cambios sugeridos", len(action_rows))
+        change_panel = _workbench_attention_panel(
+            kind="change",
+            kicker="Después decide la compra",
+            title="Cambios sugeridos",
+            total=len(action_rows),
+            cards=_change_cards(action_rows, change_limit),
+            empty_message="La orden no necesita aumentos, reducciones ni productos adicionales.",
+            visible_limit=change_limit,
+        )
+        st.html(
+            f'<div class="ops-attention-grid">{quality_panel}{change_panel}</div>'
+        )
+        st.info(
+            "Corrige primero los datos marcados en rojo. Después abre "
+            "**2 · Revisar o ajustar** para confirmar los cambios sugeridos."
+        )
 
-        upload_column, reset_column = st.columns(2, gap="large")
-        with upload_column:
-            st.markdown("**¿Quieres probar otra orden?**")
-            st.caption("Carga un CSV con las columnas sucursal, ingrediente_id y cantidad_formatos.")
-            uploaded = st.file_uploader(
-                "Seleccionar orden de compra",
-                type=["csv"],
-                key="pro_order_upload",
-                label_visibility="collapsed",
+    with review_tab:
+        st.markdown(
+            "<div class='ops-step-title'>Paso 2. Revisa o ajusta la orden</div>"
+            "<div class='ops-step-help'>Primero aparecen solamente las líneas que deben "
+            "agregarse, aumentarse o reducirse.</div>",
+            unsafe_allow_html=True,
+        )
+        review_metrics = st.columns(4)
+        review_metrics[0].metric("Debes cambiar", len(action_rows))
+        review_metrics[1].metric("Ya están bien", len(correct_rows))
+        review_metrics[2].metric("Revisar datos", len(incomplete_rows))
+        review_metrics[3].metric("Productos desconocidos", len(unknown))
+
+        visible_columns = [
+            "Decisión",
+            "Sucursal",
+            "Ingrediente",
+            "Pedido actual",
+            "Cantidad sugerida",
+            "Cambio",
+            "Proveedor",
+        ]
+        if action_rows.empty:
+            st.success("La orden no necesita aumentos, reducciones ni productos adicionales.")
+        else:
+            st.markdown(
+                "<div class='ops-note'><b>Lee la columna Cambio.</b> Resume exactamente qué "
+                "debe agregarse o retirarse antes de aprobar.</div>",
+                unsafe_allow_html=True,
             )
-            if uploaded is not None:
-                try:
-                    candidate = read_order_upload(BytesIO(uploaded.getvalue()))
-                    preview_validation = validate_data(
-                        bundle.catalogo,
-                        bundle.historico,
-                        bundle.inventario,
-                        candidate,
-                    )
-                    missing_schema = preview_validation.incidencias[
-                        preview_validation.incidencias["codigo"] == "COLUMNA_AUSENTE"
-                    ]
-                    if not missing_schema.empty:
-                        st.error("El archivo no puede utilizarse: faltan columnas obligatorias.")
-                        st.dataframe(missing_schema, width="stretch", hide_index=True)
-                    else:
-                        error_count = int((preview_validation.incidencias["nivel"] == "Error").sum())
-                        if error_count:
-                            st.warning(f"El archivo conserva {error_count} errores visibles para corrección.")
-                        else:
-                            st.success("El archivo está listo. Actívalo para recalcular la revisión.")
-                        if st.button(
-                            "Activar este archivo",
-                            key="pro_use_upload",
-                            width="stretch",
-                            type="primary",
-                        ):
-                            current = candidate.copy()
-                            numeric = pd.to_numeric(current["cantidad_formatos"], errors="coerce")
-                            current["cantidad_formatos"] = numeric.where(numeric.notna(), current["cantidad_formatos"])
-                            st.session_state.pro_working_order = current
-                            st.session_state.pro_order_source = {
-                                "kind": "uploaded",
-                                "name": uploaded.name,
-                                "edited": False,
-                            }
-                            st.session_state.pro_editor_version += 1
-                            st.rerun()
-                except Exception as exc:
-                    st.error(f"No fue posible leer el archivo: {exc}")
-        with reset_column:
-            st.markdown("**¿Quieres volver a los datos iniciales?**")
-            st.caption(
-                "Restablece orden_compra_semana.csv y elimina solamente los cambios de esta sesión."
+            st.dataframe(
+                action_rows[visible_columns],
+                width="stretch",
+                hide_index=True,
+            )
+
+        if not incomplete_rows.empty:
+            st.warning(
+                f"Hay {len(incomplete_rows)} líneas sin información suficiente. "
+                "No se completaron con cero automáticamente."
+            )
+            st.dataframe(
+                incomplete_rows[visible_columns],
+                width="stretch",
+                hide_index=True,
+            )
+        if not unknown.empty:
+            st.error(
+                "Los productos desconocidos quedan fuera de los pedidos a proveedores hasta "
+                "que se corrija su código o se agreguen al catálogo."
+            )
+            st.dataframe(format_table(unknown_display), width="stretch", hide_index=True)
+
+        if source_kind != "original" or source_edited:
+            st.warning(
+                f"Estás trabajando con {source_name}. Puedes volver a la orden original "
+                "sin modificar ningún archivo."
             )
             if st.button(
                 "Restablecer orden original",
                 key="pro_reset",
                 width="stretch",
-                disabled=source_kind == "original" and not source_edited,
             ):
                 original = bundle.orden.copy()
                 original["cantidad_formatos"] = pd.to_numeric(
@@ -1848,60 +2067,67 @@ def render_order_workbench(bundle: DataBundle, pipeline: dict[str, object]) -> N
                 st.session_state.pro_order_source = updated_source
                 st.rerun()
 
-        st.info("Cuando la orden esté lista, abre **2 · Revisar cambios**.")
-
-    with review_tab:
-        st.markdown(
-            "<div class='ops-step-title'>Paso 2. Comprueba qué debes cambiar</div>"
-            "<div class='ops-step-help'>Primero aparecen solamente las líneas que deben "
-            "agregarse, aumentarse o reducirse.</div>",
-            unsafe_allow_html=True,
-        )
-        review_metrics = st.columns(4)
-        review_metrics[0].metric("Debes cambiar", len(action_rows))
-        review_metrics[1].metric("Ya están bien", len(correct_rows))
-        review_metrics[2].metric("Revisar datos", len(incomplete_rows))
-        review_metrics[3].metric("Productos desconocidos", len(unknown))
-
-        visible_columns = [
-            "Decisión",
-            "Sucursal",
-            "Ingrediente",
-            "Pedido actual",
-            "Cantidad sugerida",
-            "Cambio",
-            "Proveedor",
-        ]
-        if action_rows.empty:
-            st.success("La orden no necesita aumentos, reducciones ni productos adicionales.")
-        else:
-            st.markdown(
-                "<div class='ops-note'><b>Lee la columna Cambio.</b> Resume exactamente qué "
-                "debe agregarse o retirarse antes de aprobar.</div>",
-                unsafe_allow_html=True,
+        with st.expander("Herramienta avanzada: usar otro archivo CSV", expanded=False):
+            st.caption(
+                "Esta opción se conserva para probar órdenes futuras. No es necesaria para "
+                "la revisión normal ni para la demostración."
             )
-            st.dataframe(
-                action_rows[visible_columns],
-                width="stretch",
-                hide_index=True,
+            uploaded = st.file_uploader(
+                "Seleccionar orden de compra",
+                type=["csv"],
+                key="pro_order_upload",
+                label_visibility="collapsed",
             )
-
-        if not incomplete_rows.empty:
-            st.warning(
-                f"Hay {len(incomplete_rows)} líneas sin información suficiente. "
-                "No se completaron con cero automáticamente."
-            )
-            st.dataframe(
-                incomplete_rows[visible_columns],
-                width="stretch",
-                hide_index=True,
-            )
-        if not unknown.empty:
-            st.error(
-                "Los productos desconocidos quedan fuera de los pedidos a proveedores hasta "
-                "que se corrija su código o se agreguen al catálogo."
-            )
-            st.dataframe(format_table(unknown_display), width="stretch", hide_index=True)
+            if uploaded is not None:
+                try:
+                    candidate = read_order_upload(BytesIO(uploaded.getvalue()))
+                    preview_validation = validate_data(
+                        bundle.catalogo,
+                        bundle.historico,
+                        bundle.inventario,
+                        candidate,
+                    )
+                    missing_schema = preview_validation.incidencias[
+                        preview_validation.incidencias["codigo"] == "COLUMNA_AUSENTE"
+                    ]
+                    if not missing_schema.empty:
+                        st.error("El archivo no puede utilizarse: faltan columnas obligatorias.")
+                        st.dataframe(missing_schema, width="stretch", hide_index=True)
+                    else:
+                        error_count = int(
+                            (preview_validation.incidencias["nivel"] == "Error").sum()
+                        )
+                        if error_count:
+                            st.warning(
+                                f"El archivo conserva {error_count} errores visibles para corrección."
+                            )
+                        else:
+                            st.success(
+                                "El archivo está listo. Actívalo para recalcular la revisión."
+                            )
+                        if st.button(
+                            "Activar este archivo",
+                            key="pro_use_upload",
+                            width="stretch",
+                            type="primary",
+                        ):
+                            current = candidate.copy()
+                            numeric = pd.to_numeric(
+                                current["cantidad_formatos"], errors="coerce"
+                            )
+                            current["cantidad_formatos"] = numeric.where(
+                                numeric.notna(), current["cantidad_formatos"]
+                            )
+                            st.session_state.pro_working_order = current
+                            st.session_state.pro_order_source = {
+                                "kind": "uploaded",
+                                "name": uploaded.name,
+                                "edited": False,
+                            }
+                            st.session_state.pro_editor_version += 1
+                            st.rerun()
+                except Exception as exc:
+                    st.error(f"No fue posible leer el archivo: {exc}")
 
         st.markdown(
             "<div class='ops-note'><b>Orden corregida completa.</b> Incluye también las líneas "
