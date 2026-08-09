@@ -273,6 +273,89 @@ def friendly_review_table(review: pd.DataFrame) -> pd.DataFrame:
     return review[available].rename(columns=columns)
 
 
+def friendly_corrected_order(corrected: pd.DataFrame) -> pd.DataFrame:
+    """Convierte la orden corregida en decisiones comprensibles para compras."""
+
+    decision_labels = {
+        "OMITIDO": "Agregar producto",
+        "FALTANTE": "Aumentar pedido",
+        "SOBREPEDIDO": "Reducir pedido",
+        "DATO INCOMPLETO": "Revisar datos",
+        "CORRECTO": "Sin cambios",
+        "SIN NECESIDAD": "Sin cambios",
+    }
+    priorities = {
+        "OMITIDO": 0,
+        "FALTANTE": 1,
+        "SOBREPEDIDO": 2,
+        "DATO INCOMPLETO": 3,
+        "CORRECTO": 4,
+        "SIN NECESIDAD": 5,
+    }
+
+    def integer(value: object) -> int | None:
+        if value is None or pd.isna(value):
+            return None
+        return int(round(float(value)))
+
+    def quantity(value: object, format_name: object) -> str:
+        number = integer(value)
+        if number is None:
+            return "No calculable"
+        return purchase_format_phrase(format_name, number)
+
+    rows: list[dict[str, object]] = []
+    for row in corrected.itertuples(index=False):
+        state = str(getattr(row, "estado", "DATO INCOMPLETO"))
+        format_name = getattr(row, "formato_compra", "formato")
+        original = integer(getattr(row, "cantidad_formatos_original", None))
+        recommended = integer(getattr(row, "cantidad_formatos_corregida", None))
+        difference = integer(getattr(row, "diferencia_formatos_corregir", None))
+        if recommended is None or difference is None:
+            change = "Confirmar los datos antes de decidir"
+        elif difference < 0:
+            change = f"Agregar {purchase_format_phrase(format_name, abs(difference))}"
+        elif difference > 0:
+            change = f"Retirar {purchase_format_phrase(format_name, difference)}"
+        else:
+            change = "Mantener la cantidad actual"
+        rows.append(
+            {
+                "_estado": state,
+                "_prioridad": priorities.get(state, 99),
+                "Decisión": decision_labels.get(state, "Revisar"),
+                "Sucursal": getattr(row, "sucursal", ""),
+                "Ingrediente": getattr(row, "nombre", ""),
+                "Pedido actual": quantity(original, format_name),
+                "Cantidad sugerida": quantity(recommended, format_name),
+                "Cambio": change,
+                "Proveedor": getattr(row, "proveedor", ""),
+                "Formato de compra": format_name,
+            }
+        )
+    result = pd.DataFrame(
+        rows,
+        columns=[
+            "_estado",
+            "_prioridad",
+            "Decisión",
+            "Sucursal",
+            "Ingrediente",
+            "Pedido actual",
+            "Cantidad sugerida",
+            "Cambio",
+            "Proveedor",
+            "Formato de compra",
+        ],
+    )
+    if result.empty:
+        return result
+    return result.sort_values(
+        ["_prioridad", "Sucursal", "Ingrediente"],
+        na_position="last",
+    ).reset_index(drop=True)
+
+
 def inject_app_css(st_module: object) -> None:
     """Aplica una identidad visual cálida sin afirmar colores corporativos oficiales."""
 

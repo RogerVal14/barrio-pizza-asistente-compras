@@ -37,7 +37,12 @@ from src.data_loader import DataBundle, load_data, read_order_upload
 from src.forecasting import forecast_all, week_number
 from src.purchasing import build_purchase_review, corrected_order, unknown_order_lines
 from src.reporting import build_alerts_excel, build_behaviors_excel, build_branch_excel
-from src.ui_helpers import answer_local_question, dataframe_to_csv_bytes, friendly_review_table
+from src.ui_helpers import (
+    answer_local_question,
+    dataframe_to_csv_bytes,
+    friendly_corrected_order,
+    friendly_review_table,
+)
 from src.validation import validate_data
 
 
@@ -533,6 +538,59 @@ html, body, [class*="css"] {
 .ops-note--human { background: var(--ops-red-soft); border-color: #efc7c2; }
 .ops-note b { color: var(--ops-ink); }
 
+.ops-workflow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .75rem;
+  margin: .25rem 0 1.25rem;
+}
+.ops-workflow__step {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: .65rem;
+  align-items: center;
+  min-width: 0;
+  padding: .85rem .9rem;
+  background: var(--ops-paper);
+  border: 1px solid var(--ops-line);
+  border-radius: 12px;
+}
+.ops-workflow__number {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  color: #fff;
+  background: var(--ops-red);
+  border-radius: 50%;
+  font-family: var(--ops-font-display);
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+.ops-workflow__step b {
+  display: block;
+  color: var(--ops-ink);
+  font-size: .82rem;
+}
+.ops-workflow__step span:last-child {
+  display: block;
+  margin-top: .15rem;
+  color: var(--ops-muted);
+  font-size: .7rem;
+  line-height: 1.35;
+}
+.ops-step-title {
+  margin: .8rem 0 .25rem;
+  color: var(--ops-ink);
+  font-size: 1.15rem;
+  font-weight: 850;
+}
+.ops-step-help {
+  margin: 0 0 1rem;
+  color: var(--ops-muted);
+  font-size: .78rem;
+}
+
 .ops-file-source {
   display: flex;
   align-items: center;
@@ -682,6 +740,7 @@ div.stButton > button:hover, div.stDownloadButton > button:hover,
     min-width: 145px;
   }
   .ops-purchase-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ops-workflow { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
   .ops-alert__facts { grid-template-columns: 1fr; }
@@ -1590,13 +1649,60 @@ def render_order_workbench(bundle: DataBundle, pipeline: dict[str, object]) -> N
     section_header(
         "Ejecución",
         "Mesa de compra",
-        "Edita la orden, valida cambios y prepara archivos separados por proveedor.",
+        "Prepara la orden, revisa qué cambiará y descarga un archivo para cada proveedor.",
     )
-    simulation_tab, corrected_tab, supplier_tab = st.tabs(
-        ["Simulador", "Orden corregida", "Paquetes por proveedor"]
+    st.markdown(
+        """
+        <div class="ops-workflow">
+          <div class="ops-workflow__step">
+            <span class="ops-workflow__number">1</span>
+            <div><b>Preparar la orden</b><span>Carga un CSV o cambia cantidades manualmente.</span></div>
+          </div>
+          <div class="ops-workflow__step">
+            <span class="ops-workflow__number">2</span>
+            <div><b>Revisar los cambios</b><span>Comprueba qué agregar, aumentar o retirar.</span></div>
+          </div>
+          <div class="ops-workflow__step">
+            <span class="ops-workflow__number">3</span>
+            <div><b>Descargar por proveedor</b><span>Prepara un archivo separado para cada proveedor.</span></div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    prepare_tab, review_tab, supplier_tab = st.tabs(
+        ["1 · Preparar orden", "2 · Revisar cambios", "3 · Descargar por proveedor"]
     )
 
-    with simulation_tab:
+    corrected = pipeline["corrected"].copy()
+    for column in [
+        "cantidad_formatos_original",
+        "cantidad_formatos_corregida",
+        "diferencia_formatos_corregir",
+    ]:
+        corrected[column] = pd.to_numeric(corrected[column], errors="coerce").round().astype("Int64")
+    friendly_corrected = friendly_corrected_order(corrected)
+    change_states = {"OMITIDO", "FALTANTE", "SOBREPEDIDO"}
+    correct_states = {"CORRECTO", "SIN NECESIDAD"}
+    action_rows = friendly_corrected[friendly_corrected["_estado"].isin(change_states)]
+    incomplete_rows = friendly_corrected[friendly_corrected["_estado"] == "DATO INCOMPLETO"]
+    correct_rows = friendly_corrected[friendly_corrected["_estado"].isin(correct_states)]
+    unknown = pipeline["unknown_order"]
+    unknown_display = unknown.rename(
+        columns={
+            "sucursal": "Sucursal",
+            "ingrediente_id": "Código sin reconocer",
+            "cantidad_formatos": "Cantidad pedida",
+        }
+    )
+
+    with prepare_tab:
+        st.markdown(
+            "<div class='ops-step-title'>Paso 1. Elige la orden que quieres revisar</div>"
+            "<div class='ops-step-help'>La orden activa se conserva durante esta sesión. "
+            "Nada se guarda en los CSV originales.</div>",
+            unsafe_allow_html=True,
+        )
         source = st.session_state.pro_order_source
         source_name = escape(str(source["name"]))
         source_kind = str(source["kind"])
@@ -1620,12 +1726,27 @@ def render_order_workbench(bundle: DataBundle, pipeline: dict[str, object]) -> N
             """,
             unsafe_allow_html=True,
         )
-        upload_column, status_column = st.columns([1.45, .55], gap="large")
+
+        quality_errors = pipeline["quality"]
+        quality_errors = (
+            quality_errors[quality_errors["nivel"] == "Error"]
+            if not quality_errors.empty
+            else quality_errors
+        )
+        status_columns = st.columns(3)
+        status_columns[0].metric("Líneas en la orden", len(st.session_state.pro_working_order))
+        status_columns[1].metric("Errores que debes corregir", len(quality_errors))
+        status_columns[2].metric("Cambios sugeridos", len(action_rows))
+
+        upload_column, reset_column = st.columns(2, gap="large")
         with upload_column:
+            st.markdown("**¿Quieres probar otra orden?**")
+            st.caption("Carga un CSV con las columnas sucursal, ingrediente_id y cantidad_formatos.")
             uploaded = st.file_uploader(
-                "Cargar orden_compra_semana.csv",
+                "Seleccionar orden de compra",
                 type=["csv"],
                 key="pro_order_upload",
+                label_visibility="collapsed",
             )
             if uploaded is not None:
                 try:
@@ -1647,8 +1768,13 @@ def render_order_workbench(bundle: DataBundle, pipeline: dict[str, object]) -> N
                         if error_count:
                             st.warning(f"El archivo conserva {error_count} errores visibles para corrección.")
                         else:
-                            st.success("El esquema es válido y no contiene errores bloqueantes.")
-                        if st.button("Usar archivo cargado", key="pro_use_upload", width="stretch"):
+                            st.success("El archivo está listo. Actívalo para recalcular la revisión.")
+                        if st.button(
+                            "Activar este archivo",
+                            key="pro_use_upload",
+                            width="stretch",
+                            type="primary",
+                        ):
                             current = candidate.copy()
                             numeric = pd.to_numeric(current["cantidad_formatos"], errors="coerce")
                             current["cantidad_formatos"] = numeric.where(numeric.notna(), current["cantidad_formatos"])
@@ -1662,106 +1788,192 @@ def render_order_workbench(bundle: DataBundle, pipeline: dict[str, object]) -> N
                             st.rerun()
                 except Exception as exc:
                     st.error(f"No fue posible leer el archivo: {exc}")
-        with status_column:
-            errors = pipeline["quality"]
-            errors = errors[errors["nivel"] == "Error"] if not errors.empty else errors
-            metric_card(
-                "Orden en uso",
-                "CSV activo" if source_kind == "uploaded" else "Original",
-                f"{len(errors)} errores · {source_label}",
-                "danger" if len(errors) else "success",
+        with reset_column:
+            st.markdown("**¿Quieres volver a los datos iniciales?**")
+            st.caption(
+                "Restablece orden_compra_semana.csv y elimina solamente los cambios de esta sesión."
             )
+            if st.button(
+                "Restablecer orden original",
+                key="pro_reset",
+                width="stretch",
+                disabled=source_kind == "original" and not source_edited,
+            ):
+                original = bundle.orden.copy()
+                original["cantidad_formatos"] = pd.to_numeric(
+                    original["cantidad_formatos"], errors="coerce"
+                )
+                st.session_state.pro_working_order = original
+                st.session_state.pro_order_source = {
+                    "kind": "original",
+                    "name": "orden_compra_semana.csv",
+                    "edited": False,
+                }
+                st.session_state.pro_editor_version += 1
+                st.rerun()
 
-        controls = st.columns([1, 1, 3])
-        if controls[0].button("Restablecer orden original", key="pro_reset", width="stretch"):
-            original = bundle.orden.copy()
-            original["cantidad_formatos"] = pd.to_numeric(original["cantidad_formatos"], errors="coerce")
-            st.session_state.pro_working_order = original
-            st.session_state.pro_order_source = {
-                "kind": "original",
-                "name": "orden_compra_semana.csv",
-                "edited": False,
-            }
-            st.session_state.pro_editor_version += 1
-            st.rerun()
-        controls[1].metric("Líneas actuales", len(st.session_state.pro_working_order))
-        controls[2].caption("Los cambios recalculan proyección, necesidad, recomendación y alertas. No se eliminan filas problemáticas.")
-
-        current = st.session_state.pro_working_order
-        quantities = pd.to_numeric(current["cantidad_formatos"], errors="coerce")
-        has_invalid = bool(current["cantidad_formatos"].notna().any() and quantities.isna().any())
-        quantity_config = (
-            st.column_config.TextColumn("Cantidad de formatos", required=True)
-            if has_invalid
-            else st.column_config.NumberColumn(
-                "Cantidad de formatos", min_value=0.0, step=1.0, required=True
+        with st.expander("Editar cantidades manualmente (opcional)", expanded=False):
+            st.caption(
+                "Cambia únicamente Cantidad de formatos. Cada edición recalcula inmediatamente "
+                "la recomendación y las alertas."
             )
-        )
-        edited = st.data_editor(
-            current,
-            num_rows="dynamic",
-            width="stretch",
-            hide_index=True,
-            key=f"pro_order_editor_{st.session_state.pro_editor_version}",
-            column_config={
-                "sucursal": st.column_config.TextColumn("Sucursal", required=True),
-                "ingrediente_id": st.column_config.TextColumn("Ingrediente ID", required=True),
-                "cantidad_formatos": quantity_config,
-            },
-        )
-        if not edited.reset_index(drop=True).equals(current.reset_index(drop=True)):
-            st.session_state.pro_working_order = edited.reset_index(drop=True)
-            updated_source = dict(st.session_state.pro_order_source)
-            updated_source["edited"] = True
-            st.session_state.pro_order_source = updated_source
-            st.rerun()
+            current = st.session_state.pro_working_order
+            quantities = pd.to_numeric(current["cantidad_formatos"], errors="coerce")
+            has_invalid = bool(
+                current["cantidad_formatos"].notna().any() and quantities.isna().any()
+            )
+            quantity_config = (
+                st.column_config.TextColumn("Cantidad de formatos", required=True)
+                if has_invalid
+                else st.column_config.NumberColumn(
+                    "Cantidad de formatos", min_value=0.0, step=1.0, required=True
+                )
+            )
+            edited = st.data_editor(
+                current,
+                num_rows="dynamic",
+                width="stretch",
+                hide_index=True,
+                key=f"pro_order_editor_{st.session_state.pro_editor_version}",
+                column_config={
+                    "sucursal": st.column_config.TextColumn("Sucursal", required=True),
+                    "ingrediente_id": st.column_config.TextColumn("Ingrediente ID", required=True),
+                    "cantidad_formatos": quantity_config,
+                },
+            )
+            if not edited.reset_index(drop=True).equals(current.reset_index(drop=True)):
+                st.session_state.pro_working_order = edited.reset_index(drop=True)
+                updated_source = dict(st.session_state.pro_order_source)
+                updated_source["edited"] = True
+                st.session_state.pro_order_source = updated_source
+                st.rerun()
 
-    corrected = pipeline["corrected"].copy()
-    for column in [
-        "cantidad_formatos_original",
-        "cantidad_formatos_corregida",
-        "diferencia_formatos_corregir",
-    ]:
-        corrected[column] = pd.to_numeric(corrected[column], errors="coerce").round().astype("Int64")
+        st.info("Cuando la orden esté lista, abre **2 · Revisar cambios**.")
 
-    with corrected_tab:
+    with review_tab:
         st.markdown(
-            "<div class='ops-note'><b>Regla:</b> la orden corregida incluye todo el catálogo conocido. "
-            "Las cantidades no calculables permanecen vacías para revisión humana.</div>",
+            "<div class='ops-step-title'>Paso 2. Comprueba qué debes cambiar</div>"
+            "<div class='ops-step-help'>Primero aparecen solamente las líneas que deben "
+            "agregarse, aumentarse o reducirse.</div>",
+            unsafe_allow_html=True,
+        )
+        review_metrics = st.columns(4)
+        review_metrics[0].metric("Debes cambiar", len(action_rows))
+        review_metrics[1].metric("Ya están bien", len(correct_rows))
+        review_metrics[2].metric("Revisar datos", len(incomplete_rows))
+        review_metrics[3].metric("Productos desconocidos", len(unknown))
+
+        visible_columns = [
+            "Decisión",
+            "Sucursal",
+            "Ingrediente",
+            "Pedido actual",
+            "Cantidad sugerida",
+            "Cambio",
+            "Proveedor",
+        ]
+        if action_rows.empty:
+            st.success("La orden no necesita aumentos, reducciones ni productos adicionales.")
+        else:
+            st.markdown(
+                "<div class='ops-note'><b>Lee la columna Cambio.</b> Resume exactamente qué "
+                "debe agregarse o retirarse antes de aprobar.</div>",
+                unsafe_allow_html=True,
+            )
+            st.dataframe(
+                action_rows[visible_columns],
+                width="stretch",
+                hide_index=True,
+            )
+
+        if not incomplete_rows.empty:
+            st.warning(
+                f"Hay {len(incomplete_rows)} líneas sin información suficiente. "
+                "No se completaron con cero automáticamente."
+            )
+            st.dataframe(
+                incomplete_rows[visible_columns],
+                width="stretch",
+                hide_index=True,
+            )
+        if not unknown.empty:
+            st.error(
+                "Los productos desconocidos quedan fuera de los pedidos a proveedores hasta "
+                "que se corrija su código o se agreguen al catálogo."
+            )
+            st.dataframe(format_table(unknown_display), width="stretch", hide_index=True)
+
+        st.markdown(
+            "<div class='ops-note'><b>Orden corregida completa.</b> Incluye también las líneas "
+            "que ya estaban bien. Las cantidades no calculables permanecen vacías para revisión humana.</div>",
             unsafe_allow_html=True,
         )
         st.download_button(
-            "Descargar orden corregida completa",
+            "Descargar orden corregida completa (CSV)",
             dataframe_to_csv_bytes(corrected),
             file_name="orden_corregida_completa.csv",
             mime="text/csv",
             width="stretch",
+            type="primary",
+            key="pro_download_corrected_order",
         )
-        st.dataframe(corrected, width="stretch", hide_index=True)
-        unknown = pipeline["unknown_order"]
-        if not unknown.empty:
-            st.error("Ingredientes desconocidos excluidos de las órdenes a proveedores.")
-            st.dataframe(format_table(unknown), width="stretch", hide_index=True)
+        with st.expander("Ver la orden completa, incluidas las líneas sin cambios"):
+            st.dataframe(
+                friendly_corrected[visible_columns],
+                width="stretch",
+                hide_index=True,
+            )
+        st.info("Si los cambios son correctos, abre **3 · Descargar por proveedor**.")
 
     with supplier_tab:
+        st.markdown(
+            "<div class='ops-step-title'>Paso 3. Prepara un archivo para cada proveedor</div>"
+            "<div class='ops-step-help'>Cada descarga contiene únicamente los productos de ese "
+            "proveedor. La aplicación no envía ni confirma órdenes automáticamente.</div>",
+            unsafe_allow_html=True,
+        )
         suppliers = corrected["proveedor"].dropna().sort_values().unique().tolist()
+        supplier_metrics = st.columns(3)
+        supplier_metrics[0].metric("Proveedores", len(suppliers))
+        supplier_metrics[1].metric("Líneas conocidas", len(corrected))
+        supplier_metrics[2].metric("Pendientes por corregir", len(unknown))
         if not suppliers:
             st.info("No hay proveedores con líneas calculables.")
         for supplier in suppliers:
             supplier_order = corrected[corrected["proveedor"] == supplier]
-            with st.expander(f"{supplier} · {len(supplier_order)} líneas", expanded=False):
-                st.dataframe(supplier_order, width="stretch", hide_index=True)
+            supplier_preview = friendly_corrected[
+                friendly_corrected["Proveedor"] == supplier
+            ]
+            supplier_changes = int(supplier_preview["_estado"].isin(change_states).sum())
+            changes_label = "cambio" if supplier_changes == 1 else "cambios"
+            with st.expander(
+                f"{supplier} · {len(supplier_order)} productos · "
+                f"{supplier_changes} {changes_label}",
+                expanded=False,
+            ):
+                st.dataframe(
+                    supplier_preview[
+                        ["Sucursal", "Ingrediente", "Cantidad sugerida", "Cambio"]
+                    ],
+                    width="stretch",
+                    hide_index=True,
+                )
                 safe_name = "".join(
                     character.lower() if character.isalnum() else "_" for character in supplier
                 ).strip("_")
                 st.download_button(
-                    f"Descargar orden de {supplier}",
+                    f"Descargar CSV para {supplier}",
                     dataframe_to_csv_bytes(supplier_order),
                     file_name=f"orden_{safe_name}.csv",
                     mime="text/csv",
                     key=f"pro_supplier_{safe_name}",
                     width="stretch",
                 )
+        if not unknown.empty:
+            st.warning(
+                f"Hay {len(unknown)} producto(s) desconocido(s) que no se incluyeron en ningún "
+                "archivo de proveedor. Corrígelos en Datos y método."
+            )
 
 
 def quality_issue_card(row: object, ingredient_names: dict[str, str]) -> None:
