@@ -1,95 +1,107 @@
 # Guion sugerido para el video (3–5 minutos)
 
-Duración objetivo: **4 minutos y 30 segundos**. La idea es hablar con naturalidad y usar el dashboard como apoyo. No es necesario leer todos los textos ni mostrar todas las tablas.
+Duración objetivo: **4 minutos y 45 segundos**. El recorrido sigue el mismo orden de la aplicación: introducción, margen de seguridad y luego cada pestaña de izquierda a derecha.
 
-## 0:00–0:25 · El problema de negocio
+## 0:00–0:25 · Introducción
 
-Mostrar la aplicación desde **Vista ejecutiva**.
+Abrir la aplicación desde **Vista ejecutiva** y mostrar el encabezado.
 
-> “Cada sucursal arma su orden semanal en sacos, cajas o paquetes, mientras que el consumo y el inventario se registran en unidades como kilos o litros. Revisar todo manualmente toma tiempo y puede esconder faltantes o sobrepedidos. Construí este asistente para que la gerente identifique en pocos segundos qué necesita revisar antes de aprobar una compra.”
+> “Hola. Este es el Asistente Inteligente de Compras de Barrio Pizza. Cada sucursal arma su orden semanal en sacos, cajas o paquetes, mientras que el consumo y el inventario se registran en unidades como kilos o litros. Revisarlo manualmente toma tiempo y puede esconder tanto faltantes como sobrepedidos. Esta herramienta convierte los cuatro CSV entregados en recomendaciones claras antes de aprobar una compra.”
 
-## 0:25–0:50 · Vista ejecutiva
+Señalar el aviso de aprobación humana.
 
-Señalar los indicadores superiores y la cola de decisiones.
+> “La aplicación ayuda a tomar la decisión, pero ninguna orden se aprueba automáticamente.”
 
-> “La Vista ejecutiva resume las 88 combinaciones de sucursal e ingrediente. Aquí puedo ver cuántas líneas están bien, los riesgos de quiebre, los sobrepedidos y los errores de datos. Las tarjetas prioritarias me dicen directamente qué producto cambiar, en qué sucursal y en qué formato de compra. Las recomendaciones siempre quedan pendientes de aprobación humana.”
+## 0:25–0:45 · Margen de seguridad simulado
 
-Mencionar brevemente que el margen de seguridad está en **0%** y que los filtros laterales cambian el alcance de la revisión.
+Mostrar el control lateral **Margen de seguridad simulado** y dejarlo en **0%**.
 
-## 0:50–1:15 · Producto omitido y faltante
+> “Este control permite simular un pequeño colchón por si la próxima semana se consume más de lo esperado. Con 10%, por ejemplo, la herramienta aumenta el consumo proyectado en 10% antes de calcular la necesidad. Esto no significa agregar siempre otro saco o caja: la recomendación solo cambia si se necesita otro formato completo. Para esta demostración lo dejo en 0%, porque así se aplica la fórmula original del reto.”
+
+## 0:45–1:15 · Pestaña 1: Vista ejecutiva
+
+Mostrar los indicadores y la cola de decisiones.
+
+> “La primera pestaña es la Vista ejecutiva. Aquí se resumen las 88 combinaciones de sucursal e ingrediente. Puedo ver cuántas líneas están bien, los riesgos de quiebre, los sobrepedidos y los errores de datos.”
+
+> “Debajo aparecen primero las decisiones de mayor prioridad. Cada tarjeta indica la sucursal, el ingrediente, lo que se pidió, lo recomendado, la diferencia y el proveedor. Las señales comparativas entre sucursales pueden coincidir con una alerta principal, pero no se cuentan como productos adicionales.”
+
+Mencionar brevemente que los filtros laterales permiten limitar la revisión por sucursal o proveedor.
+
+## 1:15–1:55 · Pestaña 2: Alertas
 
 Abrir **Alertas → Alertas de compra**.
 
-> “Brisas del Golf no incluyó mozzarella en su orden. La aplicación detecta la ausencia, conserva el diagnóstico de producto omitido y recomienda agregar 18 cajas de 10 kilos. También vemos que Costa del Este pidió 6 sacos de Harina 00, pero necesita 13; por eso faltan 7 sacos de 25 kilos.”
+> “En Alertas puedo filtrar por severidad, diagnóstico, sucursal, proveedor y condición de perecedero. Brisas del Golf no incluyó mozzarella en su orden. La aplicación conserva el diagnóstico de producto omitido y recomienda agregar 18 cajas de 10 kilos.”
 
-Mostrar el botón **Descargar reporte visual de alertas (Excel)**.
+Mostrar también **Costa del Este · Harina 00** y **Via Argentina · Albahaca fresca**.
 
-> “La gerente puede descargar un reporte visual con resumen, decisiones prioritarias y detalle completo. El CSV se mantiene como una opción avanzada.”
+> “Costa del Este pidió 6 sacos de harina, pero necesita 13, así que faltan 7 sacos de 25 kilos. Via Argentina pidió 20 paquetes de albahaca y la recomendación es 2. Sobran 18 paquetes y, como es un producto perecedero, requiere una revisión prioritaria.”
 
-## 1:15–1:35 · Comparación entre sucursales
+Señalar el botón del reporte Excel y después abrir **Comportamiento inusual entre sucursales**.
 
-Abrir **Alertas → Comportamiento inusual entre sucursales**.
+> “Las alertas pueden descargarse en un Excel visual con resumen y decisiones prioritarias. La segunda sección compara una sucursal con sus pares. Como solo existen cuatro sucursales, se presenta como comportamiento inusual con confianza moderada, no como una anomalía confirmada.”
 
-> “Esta comparación agrega contexto. Por ejemplo, Via Argentina está pidiendo albahaca muy por encima de su recomendación y del comportamiento de las otras sucursales. Como solo tenemos cuatro sucursales, lo presento como comportamiento inusual con confianza moderada, no como una anomalía confirmada. Si coincide con un sobrepedido, sigue siendo una sola línea de producto y no se cuenta dos veces.”
+## 1:55–2:40 · Pestaña 3: Sucursales
 
-## 1:35–2:05 · Tendencia creciente
+Abrir **Sucursales → Qué debes cambiar** y seleccionar **Brisas del Golf**.
 
-Abrir **Sucursales → Ver historial de un ingrediente**. Seleccionar **Costa del Este** y **Harina 00**.
+> “En Sucursales la revisión se concentra en una sede. Primero aparecen los productos que deben agregarse, aumentarse o reducirse. Para Brisas del Golf se debe agregar mozzarella y retirar 3 sacos de cebolla. También puedo mostrar los productos que no necesitan cambios y descargar un reporte completo de la sucursal.”
 
-> “El consumo de Harina 00 crece de forma consistente. La regresión supera los umbrales de R² y cambio relativo, por eso se usa una tendencia lineal y se proyectan aproximadamente 330,27 kilos. Con 30 kilos de inventario se necesitan 13 sacos de 25. La sucursal pidió 6, así que faltan 7.”
+Abrir **Ver historial de un ingrediente**, seleccionar **Costa del Este** y **Harina 00**.
 
-Señalar el gráfico S1–S6, la proyección S7 y la explicación del método.
+> “En el historial de Harina 00 se observa un crecimiento consistente. La tendencia supera los umbrales definidos, por eso se proyectan aproximadamente 330,27 kilos. Después de restar 30 kilos de inventario, se recomiendan 13 sacos de 25 kilos.”
 
-## 2:05–2:30 · Valor histórico atípico
+Cambiar a **Marbella** y **Pepperoni**.
 
-En la misma sección, seleccionar **Marbella** y **Pepperoni**. Activar la comparación con el promedio simple si está disponible.
+> “En pepperoni, los 150 kilos de S3 están muy lejos del resto. MAD detecta ese valor como atípico y lo excluye porque todavía quedan suficientes semanas válidas. La proyección limpia queda cerca de 29 kilos y las 5 cajas ordenadas son correctas. Así se evita una falsa alerta que sí produciría el promedio simple.”
 
-> “En S3 aparecen 150 kilos de pepperoni, muy lejos del resto del histórico. MAD lo identifica como atípico y, como quedan suficientes observaciones, lo excluye de la proyección robusta. El resultado limpio es cercano a 29 kilos. Con 4,7 kilos de inventario, las 5 cajas ordenadas son correctas. Usar el promedio simple habría generado una alerta falsa.”
-
-## 2:30–2:50 · Sobrepedido perecedero
-
-Regresar a **Alertas** y mostrar **Via Argentina · Albahaca fresca**.
-
-> “Via Argentina pidió 20 paquetes de albahaca y la recomendación es 2. Sobran 18 paquetes. La aplicación resalta que es un producto perecedero, por lo que conviene revisar el exceso antes de enviar la orden.”
-
-## 2:50–3:15 · Edición y recálculo
+## 2:40–3:20 · Pestaña 4: Mesa de compra
 
 Abrir **Mesa de compra → Simulador** y modificar una cantidad.
 
-> “La gerente puede cargar un nuevo CSV o editar las cantidades directamente. Al cambiar una orden, la aplicación vuelve a validar los datos y actualiza inmediatamente los diagnósticos y recomendaciones. También puede restablecer la orden original. Los valores inválidos no se convierten silenciosamente en cero.”
+> “La Mesa de compra permite cargar un nuevo CSV o editar la orden directamente. Cuando cambio una cantidad, la aplicación vuelve a validar y recalcula inmediatamente los diagnósticos. También puedo restablecer la orden original. Los datos inválidos o faltantes nunca se convierten silenciosamente en cero.”
 
-## 3:15–3:35 · Orden corregida por proveedor
+Abrir **Orden corregida** y luego **Paquetes por proveedor**.
 
-Abrir **Mesa de compra → Orden corregida** y después **Paquetes por proveedor**.
+> “La Orden corregida muestra la cantidad original, la recomendada y la diferencia. En Paquetes por proveedor se genera una lista separada para cada proveedor, lista para descargar.”
 
-> “La orden corregida incluye la cantidad original, la recomendada y el cambio sugerido. También se organiza por proveedor para descargar cada parte por separado. `aji_chombo`, que no existe en el catálogo, queda como dato pendiente y no entra en una orden porque no sería correcto inventar su proveedor, unidad o formato.”
+> “El ingrediente `aji_chombo` aparece como dato pendiente porque no existe en el catálogo. Por seguridad, la herramienta no inventa su proveedor, unidad ni formato y no lo incluye en una orden corregida.”
 
-## 3:35–3:55 · Calidad de datos y método
+## 3:20–3:55 · Pestaña 5: Datos y método
 
-Abrir **Datos y método → Problemas que debes corregir** y **Consumos inusuales**.
+Abrir **Datos y método → Problemas que debes corregir** y después **Consumos inusuales**.
 
-> “Aquí separé los problemas de calidad, las alertas de compra y los consumos históricos inusuales. Nada se elimina o corrige automáticamente. En ‘Cómo calculamos’ se explica el método: MAD para valores extremos, tendencia lineal solo cuando existe evidencia fuerte y promedio limpio en los demás casos. La compra usa techo matemático porque no existe medio saco o media caja.”
+> “Esta pestaña separa los problemas de calidad de las alertas de compra y de los consumos históricos inusuales. Aquí aparecen el ingrediente desconocido, el producto omitido y el valor atípico de pepperoni, explicando por qué importa cada caso. Ningún registro se borra o corrige automáticamente.”
 
-## 3:55–4:15 · Asistente inteligente y uso de IA
+Abrir **Consumo esperado** y **Cómo calculamos**.
 
-Abrir **Asistente inteligente**, mostrar el selector entre **IA generativa** y **Asistente local** y ejecutar una pregunta sugerida.
+> “El método busca ser fácil de defender. Primero usa MAD para detectar extremos. Si existe una tendencia fuerte, usa regresión lineal; si no, utiliza el promedio de los datos limpios. Luego resta el inventario y aplica techo matemático para comprar formatos completos. El sobrante dentro del último formato es redondeo normal, no sobrepedido.”
 
-> “El asistente permite consultar los resultados en español. Python sigue calculando todas las cifras; Gemini solamente interpreta un contexto limitado y responde con identificadores de evidencia. Si Gemini no está disponible, la aplicación utiliza el asistente local y el resto del dashboard sigue funcionando.”
+## 3:55–4:25 · Pestaña 6: Asistente inteligente
 
-> “Para construir el proyecto usé ChatGPT y Codex como apoyo para analizar el reto, organizar la arquitectura, generar pruebas, documentar y revisar el código. Después validé personalmente la interfaz y los casos esperados. Todo está explicado con transparencia en `AI_USAGE.md`.”
+Abrir **Asistente inteligente**, mostrar el selector y ejecutar una pregunta sugerida.
 
-## 4:15–4:30 · Integración futura con Odoo y cierre
+> “La última pestaña permite hacer preguntas en español. Puedo elegir entre IA generativa y Asistente local. Python calcula todas las proyecciones, necesidades y recomendaciones; Gemini solamente interpreta un contexto limitado y responde utilizando identificadores de evidencia.”
 
-> “La aplicación todavía no está conectada a Odoo. En producción leería catálogo, inventario y movimientos mediante API, generaría órdenes de compra en borrador por proveedor y mantendría aprobación humana, permisos y auditoría. El resultado actual convierte cuatro CSV en una revisión semanal clara, explicable y accionable.”
+> “Si Gemini no está configurado, alcanza su límite o falla, se activa el respaldo local y el resto de la aplicación continúa funcionando.”
+
+> “Para desarrollar el proyecto usé ChatGPT y Codex como apoyo para analizar el reto, organizar la arquitectura, generar pruebas, documentar y revisar el código. Después validé personalmente la interfaz y los casos esperados. El proceso está documentado en `AI_USAGE.md`.”
+
+## 4:25–4:45 · Odoo y cierre
+
+> “La aplicación todavía no está conectada a Odoo. En producción leería el catálogo, inventario y movimientos mediante API, generaría órdenes de compra en borrador por proveedor y mantendría aprobación humana, permisos y auditoría.”
+
+> “El resultado convierte cuatro CSV en una revisión semanal rápida, explicable y accionable para la gerente de compras. Gracias.”
 
 ## Antes de grabar
 
 - Ejecutar `pytest` y confirmar que todas las pruebas pasan.
 - Abrir la entrega con `streamlit run app_intelligent.py` o utilizar el enlace público.
-- Mantener el margen de seguridad en **0%** para mostrar los resultados originales.
-- Cerrar otras ventanas, notificaciones y cualquier archivo que pueda mostrar información personal.
+- Mantener el margen de seguridad en **0%** durante la demostración.
+- Cerrar otras ventanas, notificaciones y archivos con información personal.
 - Practicar una vez para mantener el video entre tres y cinco minutos.
-- Hablar con palabras propias; el guion es una guía, no un texto obligatorio.
+- Hablar con palabras propias; este guion es una guía y no debe sonar memorizado.
 - Evitar mencionar cifras que no estén visibles o verificadas en el dashboard.
-- Comprobar en incógnito el enlace de la aplicación y el enlace del video.
+- Comprobar en incógnito tanto el enlace de la aplicación como el enlace del video.
 - Confirmar que ninguno de los dos enlaces solicita iniciar sesión o pedir acceso.
