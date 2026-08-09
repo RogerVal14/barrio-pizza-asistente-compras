@@ -1,6 +1,6 @@
 # Guion sugerido para el video (3–5 minutos)
 
-Duración objetivo: **4 minutos y 45 segundos**. El recorrido sigue el mismo orden de la aplicación: introducción, margen de seguridad y luego cada pestaña de izquierda a derecha.
+Duración objetivo: **4 minutos y 55 segundos**. El recorrido sigue el mismo orden de la aplicación: introducción, margen de seguridad y luego cada pestaña de izquierda a derecha.
 
 ## 0:00–0:25 · Introducción
 
@@ -56,15 +56,33 @@ Cambiar a **Marbella** y **Pepperoni**.
 
 > “En pepperoni, los 150 kilos de S3 están muy lejos del resto. MAD detecta ese valor como atípico y lo excluye porque todavía quedan suficientes semanas válidas. La proyección limpia queda cerca de 29 kilos y las 5 cajas ordenadas son correctas. Así se evita una falsa alerta que sí produciría el promedio simple.”
 
-## 2:40–3:20 · Pestaña 4: Mesa de compra
+## 2:40–3:30 · Pestaña 4: Mesa de compra
 
 Abrir **Mesa de compra → Simulador** y cargar `docs/orden_compra_demo_video.csv`. Después, presionar **Usar archivo cargado**.
 
-> “La Mesa de compra permite cargar un nuevo CSV o editar la orden directamente. Este archivo de demostración corrige las alertas originales y crea dos situaciones nuevas: Marbella pide 3 cajas de pepperoni cuando necesita 5, y Costa del Este pide 18 cajas de mozzarella cuando necesita 14. Al usar el archivo, la aplicación lo valida y recalcula inmediatamente los diagnósticos.”
+> “La Mesa de compra permite cargar un nuevo CSV o editar la orden directamente. El archivo de demostración tiene la misma estructura y las mismas 88 líneas de la orden original, pero cambia algunas decisiones de compra. Corrige la mozzarella omitida de Brisas del Golf, el faltante de harina de Costa del Este y los sobrepedidos originales de cebolla y albahaca. También elimina `aji_chombo`, porque no existe en el catálogo.”
+
+> “Para demostrar que el sistema no tiene respuestas fijas, el archivo crea dos situaciones nuevas: Marbella pide 3 cajas de pepperoni cuando necesita 5, y Costa del Este pide 18 cajas de mozzarella cuando necesita 14. Al usar el archivo, la aplicación lo valida y recalcula inmediatamente los diagnósticos.”
+
+Como referencia para la demostración, estas son las diferencias frente al archivo original:
+
+| Cambio | Orden original | CSV de demostración |
+|---|---:|---:|
+| Mozzarella · Brisas del Golf | Omitida | 18 cajas |
+| Harina 00 · Costa del Este | 6 sacos | 13 sacos |
+| Cebolla · Brisas del Golf | 5 sacos | 2 sacos |
+| Albahaca · Via Argentina | 20 paquetes | 2 paquetes |
+| Pepperoni · Marbella | 5 cajas | 3 cajas |
+| Mozzarella · Costa del Este | 14 cajas | 18 cajas |
+| `aji_chombo` · Costa del Este | Incluido | Eliminado |
 
 Editar el pepperoni de Marbella de **3** a **5** formatos.
 
 > “También puedo corregir una cantidad desde la tabla. Al cambiar el pepperoni de 3 a 5 cajas, el faltante desaparece inmediatamente. Los datos inválidos o faltantes nunca se convierten silenciosamente en cero y siempre puedo restablecer la orden original.”
+
+Presionar **Restablecer orden original** antes de continuar con las demás secciones.
+
+> “Para continuar mostrando los casos originales del reto, restablezco la orden. El indicador superior vuelve a mostrar `orden_compra_semana.csv`, confirmando cuál archivo está utilizando la aplicación.”
 
 Abrir **Orden corregida** y luego **Paquetes por proveedor**.
 
@@ -72,7 +90,7 @@ Abrir **Orden corregida** y luego **Paquetes por proveedor**.
 
 > “El ingrediente `aji_chombo` aparece como dato pendiente porque no existe en el catálogo. Por seguridad, la herramienta no inventa su proveedor, unidad ni formato y no lo incluye en una orden corregida.”
 
-## 3:20–3:55 · Pestaña 5: Datos y método
+## 3:30–4:05 · Pestaña 5: Datos y método
 
 Abrir **Datos y método → Problemas que debes corregir** y después **Consumos inusuales**.
 
@@ -82,7 +100,7 @@ Abrir **Consumo esperado** y **Cómo calculamos**.
 
 > “El método busca ser fácil de defender. Primero usa MAD para detectar extremos. Si existe una tendencia fuerte, usa regresión lineal; si no, utiliza el promedio de los datos limpios. Luego resta el inventario y aplica techo matemático para comprar formatos completos. El sobrante dentro del último formato es redondeo normal, no sobrepedido.”
 
-## 3:55–4:25 · Pestaña 6: Asistente inteligente
+## 4:05–4:35 · Pestaña 6: Asistente inteligente
 
 Abrir **Asistente inteligente**, mostrar el selector y ejecutar una pregunta sugerida.
 
@@ -92,7 +110,7 @@ Abrir **Asistente inteligente**, mostrar el selector y ejecutar una pregunta sug
 
 > “Para desarrollar el proyecto usé ChatGPT y Codex como apoyo para analizar el reto, organizar la arquitectura, generar pruebas, documentar y revisar el código. Después validé personalmente la interfaz y los casos esperados. El proceso está documentado en `AI_USAGE.md`.”
 
-## 4:25–4:45 · Odoo y cierre
+## 4:35–4:55 · Odoo y cierre
 
 > “La aplicación todavía no está conectada a Odoo. En producción leería el catálogo, inventario y movimientos mediante API, generaría órdenes de compra en borrador por proveedor y mantendría aprobación humana, permisos y auditoría.”
 
